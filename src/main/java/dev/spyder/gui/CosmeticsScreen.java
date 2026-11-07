@@ -85,7 +85,7 @@ public class CosmeticsScreen extends Screen {
 		rrect(g, pvx, pvy, PREVIEW_W, PREVIEW_H, 0x22000000);
 		rrect(g, pvx + 1, pvy + 1, PREVIEW_W - 2, PREVIEW_H - 2, 0xFF16121E);
 		// Glow ring accent
-		glowRing(g, pvx, pvy, PREVIEW_W, PREVIEW_H, time);
+		glowRing(g, pvx, pvy, PREVIEW_W, PREVIEW_H);
 		// Draw the player!
 		drawPlayerPreview(g, pvx, pvy, PREVIEW_W, PREVIEW_H, time);
 
@@ -154,16 +154,16 @@ public class CosmeticsScreen extends Screen {
 			rrect(g, x + w - chipW - 16, y + 3, chipW + 12, ROW_H - 6, 0x24FFFFFF);
 			g.drawString(this.font, chip, x + w - chipW - 10, y + 7, hue(time, y * 16));
 		} else if (s instanceof SpyderSettings.ToggleSetting tog) {
-			g.drawString(this.font, cosDisplay(tog), x, y + 7, 0xFFB0B0BC);
+			g.drawString(this.font, tog.display(), x, y + 7, 0xFFB0B0BC);
 			g.drawString(this.font, tog.value() ? "ON" : "OFF", x + w - 20, y + 7,
 					tog.value() ? GuiTheme.accent() : 0xFF7A2A2A);
 		} else if (s instanceof SpyderSettings.RangeSetting rng) {
-			g.drawString(this.font, cosDisplay(rng), x, y + 7, 0xFFB0B-0BC);
+			g.drawString(this.font, rng.display(), x, y + 7, 0xFFB0B0BC);
+			String val = String.format("%.1f", rng.value());
+			g.drawString(this.font, "-", x + w - 44, y + 7, 0xFFDDDDDD);
+			g.drawString(this.font, val, x + w - 36, y + 7, hue(time, y * 16));
+			g.drawString(this.font, "+", x + w - 14, y + 7, 0xFFDDDDDD);
 		}
-	}
-
-	private String cosDisplay(SpyderSettings.Setting s) {
-		return s.display();
 	}
 
 	@Override
@@ -239,7 +239,7 @@ public class CosmeticsScreen extends Screen {
 				|| event.key() == GLFW.GLFW_KEY_ESCAPE) {
 			onClose();
 			return true;
-    	}
+		}
 		return super.keyPressed(event);
 	}
 
@@ -261,8 +261,8 @@ public class CosmeticsScreen extends Screen {
 		g.fill(x + 3, y + 1, x + w - 3, y + h - 1, color);
 	}
 
-	/** Soft accent glow ring around the preview card, animated. */
-	private void glowRing(GuiGraphics g, int x, int y, int w, int h, long time) {
+	/** Soft accent glow ring around the preview card. */
+	private void glowRing(GuiGraphics g, int x, int y, int w, int h) {
 		int rgb = (GuiTheme.accentR << 16) | (GuiTheme.accentG << 8) | GuiTheme.accentB;
 		g.fill(x - 2, y - 2, x + w + 2, y + h + 2, (0x30 << 24) | rgb);
 	}
