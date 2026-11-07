@@ -2,35 +2,47 @@ package dev.spyder.gui;
 
 import dev.spyder.core.GuiTheme;
 import dev.spyder.core.SpyderSettings;
+import dev.spyder.module.GuiModule;
 import dev.spyder.module.Module;
 import dev.spyder.module.ModuleManager;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
- * SpyderClient ClickGUI v3 - FULLY HAND-DRAWN.
- * Zero vanilla widgets: no Buttons, no EditBoxes. Every pixel is ours.
- * - Draggable panel with animated accent strip
- * - Module rows with colored ON/OFF pills
- * - Inline expandable settings (cycle/toggle/range) right under each module
- * - Cosmic starfield background with twinkle
- * - Lag-free: statics + reused arrays, nothing allocated per frame
+ * SpyderClient ClickGUI - PRESTIGE STYLE, FULLY HAND-DRAWN.
+ * - Left category sidebar: VISUALS / HUD / CLIENT (visual modules replace
+ *   the combat categories of the reference client)
+ * - Branded header: animated rainbow client name + version, draggable
+ * - Module rows with ANIMATED SLIDING TOGGLE SWITCHES (Prestige look)
+ * - Inline expandable settings (cycle chips, switches, - value + sliders)
+ * - Cosmic starfield background, Right Shift close
+ * - Lag-free: statics + reused arrays; switch animation state in one map
  *
- * Built for the 1.21.11 input API (MouseButtonEvent signatures).
+ * Built for the 1.21.11 input API (MouseButtonEvent / KeyEvent).
  */
 public class ClickGuiScreen extends Screen {
-	private static final int PANEL_W = 240;
-	private static final int HEADER_H = 34;
+	private static final int SIDEBAR_W = 74;
+	private static final int PANEL_W = 260;
+	private static final int HEADER_H = 32;
 	private static final int MODULE_H = 26;
 	private static final int SETTING_H = 22;
-	private static final int FOOTER_H = 16;
+	private static final int FOOTER_H = 15;
+	private static final int CAT_H = 20;
+	private static final int SWITCH_W = 24;
+	private static final int SWITCH_H = 13;
+
+	private static final String[] CATS = {"VISUALS", "HUD", "CLIENT"};
 
 	// Starfield (allocated once, reused forever)
 	private static final int STAR_COUNT = 70;
@@ -46,7 +58,10 @@ public class ClickGuiScreen extends Screen {
 	private double dragOX;
 	private double dragOY;
 
+	private int activeCat = 0;
+
 	private final Set<Module> expanded = new HashSet<>();
+	private final Map<String, Float> switchAnim = new HashMap<>();
 
 	private static final class Row {
 		final Module module;
@@ -90,9 +105,34 @@ public class ClickGuiScreen extends Screen {
 		rebuildRows();
 	}
 
+	private static String categoryOf(Module m) {
+		String n = m.getName();
+		if (n.equals("HUD")) {
+			return "HUD";
+		}
+		if (n.equals("GUI Editor")) {
+			return "CLIENT";
+		}
+		return "VISUALS";
+	}
+
+	private static int countInCat(String cat) {
+		int c = 0;
+		for (Module m : ModuleManager.modules()) {
+			if (categoryOf(m).equals(cat)) {
+				c++;
+			}
+		}
+		return c;
+	}
+
 	private void rebuildRows() {
 		rows.clear();
+		String cat = CATS[activeCat];
 		for (Module m : ModuleManager.modules()) {
+			if (!categoryOf(m).equals(cat)) {
+				continue;
+			}
 			rows.add(new Row(m));
 			if (expanded.contains(m)) {
 				for (SpyderSettings.Setting s : m.settings()) {
@@ -106,8 +146,8 @@ public class ClickGuiScreen extends Screen {
 	}
 
 	private void layout() {
-		int top = (int) panelY + HEADER_H + 4;
-		int avail = this.height - top - FOOTER_H - 6;
+		int top = (int) panelY + HEADER_H + 6;
+		int avail = this.height - top - FOOTER_H - 8;
 		if (avail < MODULE_H) {
 			avail = MODULE_H;
 		}
@@ -144,97 +184,125 @@ public class ClickGuiScreen extends Screen {
 		long time = System.currentTimeMillis();
 		int px = (int) panelX;
 		int py = (int) panelY;
+		int x0 = px + SIDEBAR_W; // content left edge
+		int x1 = px + PANEL_W;   // content right edge
 
-		// Panel height from visible rows
 		int contentH = 0;
 		for (int i = pageStart; i < visibleEnd; i++) {
 			contentH += rows.get(i).isModule ? MODULE_H : SETTING_H;
 		}
-		int panelH = HEADER_H + 4 + contentH + FOOTER_H + 4;
+		int panelH = HEADER_H + 6 + contentH + FOOTER_H + 6;
 		int accent = GuiTheme.accent();
 
-		// Panel body + animated accent border
-		g.fill(px, py, px + PANEL_W, py + panelH, 0xF20B0810);
-		g.fill(px, py, px + PANEL_W, py + 1, accent);
-		g.fill(px, py + panelH - 1, px + PANEL_W, py + panelH, accent);
-		g.fill(px, py, px + 1, py + panelH, accent);
-		g.fill(px + PANEL_W - 1, py, px + PANEL_W, py + panelH, accent);
+		// Sidebar (darker) + main body
+		g.fill(px, py, px + SIDEBAR_W, py + panelH, 0xF507050D);
+		g.fill(x0, py, x1, py + panelH, 0xF20B0810);
+		// Outer border + accent top edge (Prestige-style clean edge)
+		g.fill(px, py, x1, py + 1, accent);
+		g.fill(px, py + panelH - 1, x1, py + panelH, 0xFF14141A);
+		g.fill(px, py, px + 1, py + panelH, 0xFF14141A);
+		g.fill(x1 - 1, py, x1, py + panelH, 0xFF14141A);
 
-		// Header: title + close + animated strip
-		g.drawString(this.font, "SPYDER", px + 10, py + 7, accent);
-		g.drawString(this.font, "CLIENT", px + 10 + this.font.width("SPYDER "), py + 7, 0xFFFFFFFF);
-		g.drawString(this.font, "x", px + PANEL_W - 16, py + 8, 0xFFAA6666);
-		for (int i = 0; i < PANEL_W - 4; i++) {
-			g.fill(px + 2 + i, py + HEADER_H - 4, px + 3 + i, py + HEADER_H - 1, hue(time, i));
+		// Header over content area: animated brand + version + close x
+		String title = GuiTheme.clientName;
+		int tx = x0 + 8;
+		for (int i = 0; i < title.length(); i++) {
+			String ch = String.valueOf(title.charAt(i));
+			g.drawString(this.font, ch, tx, py + 8, hue(time, i * 120));
+			tx += this.font.width(ch);
+		}
+		g.drawString(this.font, " " + GuiTheme.version, tx, py + 8, 0xFF9A9A9A);
+		g.drawString(this.font, "x", x1 - 14, py + 9, 0xFFAA6666);
+		// Animated hue strip under the header (across content width)
+		int stripW = PANEL_W - SIDEBAR_W;
+		for (int i = 0; i < stripW - 4; i++) {
+			g.fill(x0 + 2 + i, py + HEADER_H - 3, x0 + 3 + i, py + HEADER_H, hue(time, i));
 		}
 
-		// Rows
+		// Sidebar: categories with counts, active one highlighted
+		for (int i = 0; i < CATS.length; i++) {
+			int cy = py + HEADER_H + 8 + i * CAT_H;
+			boolean active = i == activeCat;
+			if (active) {
+				g.fill(px, cy, px + SIDEBAR_W, cy + CAT_H - 2, 0x22FFFFFF);
+				g.fill(px, cy, px + 2, cy + CAT_H - 2, accent);
+			}
+			int color = active ? 0xFFFFFFFF : 0xFF8E8E96;
+			g.drawString(this.font, CATS[i], px + 7, cy + 6, color);
+			String cnt = String.valueOf(countInCat(CATS[i]));
+			g.drawString(this.font, cnt, px + SIDEBAR_W - this.font.width(cnt) - 5, cy + 6, active ? accent : 0xFF55555F);
+		}
+
+		// Module / setting rows in the content area
 		for (int i = pageStart; i < visibleEnd; i++) {
 			Row r = rows.get(i);
 			int y = rowYs[i];
 			if (r.isModule) {
-				drawModuleRow(g, r.module, px, y, time);
+				drawModuleRow(g, r.module, x0, x1, y, time);
 			} else {
-				drawSettingRow(g, r, px, y, time);
+				drawSettingRow(g, r, x0, x1, y, time);
 			}
 		}
 
 		// Footer: paging arrows + hint
-		int footY = py + HEADER_H + 4 + contentH + 2;
-		g.drawString(this.font, "tap row = toggle   +/- = settings", px + 8, footY, 0xFF777777);
+		int footY = py + HEADER_H + 6 + contentH + 3;
+		g.drawString(this.font, "tap row = toggle   + = settings", x0 + 6, footY, 0xFF6E6E76);
 		if (pageStart > 0) {
-			g.drawString(this.font, "<", px + PANEL_W - 40, footY, accent);
+			g.drawString(this.font, "<", x1 - 42, footY, accent);
 		}
 		if (visibleEnd < rows.size()) {
-			g.drawString(this.font, ">", px + PANEL_W - 16, footY, accent);
+			g.drawString(this.font, ">", x1 - 18, footY, accent);
 		}
 	}
 
-	private void drawModuleRow(GuiGraphics g, Module m, int px, int y, long time) {
-		// Row background
-		g.fill(px + 4, y, px + PANEL_W - 4, y + MODULE_H - 3, 0x16FFFFFF);
-		// Accent edge (accent when ON, dark when OFF)
-		g.fill(px + 4, y, px + 6, y + MODULE_H - 3, m.isEnabled() ? GuiTheme.accent() : 0xFF3A3A3A);
-		// Name
-		g.drawString(this.font, m.getName(), px + 12, y + 9, m.isEnabled() ? 0xFFFFFFFF : 0xFFB0B0B0);
-		// State pill
-		String st = m.isEnabled() ? "ON" : "OFF";
-		int pillW = this.font.width(st) + 8;
-		int pillX = px + PANEL_W - 22 - pillW;
-		g.fill(pillX, y + 5, pillX + pillW, y + MODULE_H - 8, m.isEnabled() ? GuiTheme.accent() : 0xFF7A2A2A);
-		g.drawString(this.font, st, pillX + 4, y + 9, 0xFF0B0810);
+	private void drawModuleRow(GuiGraphics g, Module m, int x0, int x1, int y, long time) {
+		g.fill(x0 + 3, y, x1 - 3, y + MODULE_H - 3, 0x14FFFFFF);
+		g.drawString(this.font, m.getName(), x0 + 8, y + 9,
+				m.isEnabled() ? 0xFFFFFFFF : 0xFFB0B0B8);
+		// Prestige-style sliding toggle switch
+		drawSwitch(g, x1 - 40, y + 6, m.isEnabled(), m.getName());
 		// Expand indicator
 		boolean open = expanded.contains(m);
-		g.drawString(this.font, open ? "-" : "+", px + PANEL_W - 14, y + 9, 0xFFDDDDDD);
+		g.drawString(this.font, open ? "-" : "+", x1 - 14, y + 9, 0xFFDDDDDD);
 	}
 
-	private void drawSettingRow(GuiGraphics g, Row r, int px, int y, long time) {
-		int indent = px + 16;
+	private void drawSettingRow(GuiGraphics g, Row r, int x0, int x1, int y, long time) {
+		int indent = x0 + 14;
 		SpyderSettings.Setting s = r.setting;
 		if (s instanceof SpyderSettings.CycleSetting cyc) {
-			g.drawString(this.font, cyc.display(), indent, y + 7, 0xFFB8B8B8);
+			g.drawString(this.font, cyc.display(), indent, y + 7, 0xFFB8B8C0);
 			String chip = "< " + cyc.value() + " >";
 			int chipW = this.font.width(chip);
-			int chipX = px + PANEL_W - 14 - chipW;
-			g.fill(chipX - 4, y + 3, chipX + chipW + 4, y + SETTING_H - 5, 0x30FFFFFF);
+			int chipX = x1 - 10 - chipW;
+			g.fill(chipX - 5, y + 3, chipX + chipW + 5, y + SETTING_H - 5, 0x30FFFFFF);
 			g.drawString(this.font, chip, chipX, y + 7, hue(time, y * 16));
 		} else if (s instanceof SpyderSettings.ToggleSetting tog) {
-			g.drawString(this.font, tog.display(), indent, y + 7, 0xFFB8B8B8);
-			String st = tog.value() ? "ON" : "OFF";
-			int pillW = this.font.width(st) + 8;
-			int pillX = px + PANEL_W - 22 - pillW;
-			g.fill(pillX, y + 3, pillX + pillW, y + SETTING_H - 6, tog.value() ? GuiTheme.accent() : 0xFF7A2A2A);
-			g.drawString(this.font, st, pillX + 4, y + 7, 0xFF0B0810);
+			g.drawString(this.font, tog.display(), indent, y + 7, 0xFFB8B8C0);
+			drawSwitch(g, x1 - 40, y + 4, tog.value(), tog.name());
 		} else if (s instanceof SpyderSettings.RangeSetting rng) {
-			g.drawString(this.font, rng.display(), indent, y + 7, 0xFFB8B8B8);
+			g.drawString(this.font, rng.display(), indent, y + 7, 0xFFB8B8C0);
 			String val = String.format("%.2f", rng.value());
-			g.drawString(this.font, "-", px + PANEL_W - 56, y + 7, 0xFFDDDDDD);
-			g.drawString(this.font, val, px + PANEL_W - 48, y + 7, hue(time, y * 16));
-			g.drawString(this.font, "+", px + PANEL_W - 16, y + 7, 0xFFDDDDDD);
+			g.drawString(this.font, "-", x1 - 54, y + 7, 0xFFDDDDDD);
+			g.drawString(this.font, val, x1 - 46, y + 7, hue(time, y * 16));
+			g.drawString(this.font, "+", x1 - 14, y + 7, 0xFFDDDDDD);
 		}
 	}
 
-	// ---- 1.21.11 input API: MouseButtonEvent-based handlers ----
+	/** Animated sliding switch, Prestige-style. State cached per key. */
+	private void drawSwitch(GuiGraphics g, int x, int y, boolean on, String key) {
+		float f = switchAnim.getOrDefault(key, on ? 1f : 0f);
+		float target = on ? 1f : 0f;
+		f += (target - f) * 0.35f;
+		if (Math.abs(target - f) < 0.02f) {
+			f = target;
+		}
+		switchAnim.put(key, f);
+		int track = f > 0.5f ? GuiTheme.accent() : 0xFF3A2A2E;
+		g.fill(x, y, x + SWITCH_W, y + SWITCH_H, track);
+		int knob = SWITCH_H - 3;
+		int kx = x + 2 + (int) (f * (SWITCH_W - knob - 4));
+		g.fill(kx, y + 1, kx + knob, y + SWITCH_H - 1, 0xFFFFFFFF);
+	}
 
 	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
@@ -243,19 +311,36 @@ public class ClickGuiScreen extends Screen {
 		layout();
 		int px = (int) panelX;
 		int py = (int) panelY;
+		int x0 = px + SIDEBAR_W;
+		int x1 = px + PANEL_W;
 
-		// Close zone
-		if (in(mx, my, px + PANEL_W - 24, py + 3, 22, HEADER_H - 6)) {
+		// Close zone (header far right)
+		if (in(mx, my, x1 - 22, py + 3, 20, HEADER_H - 6)) {
 			onClose();
 			return true;
 		}
 
 		// Header drag
-		if (in(mx, my, px, py, PANEL_W, HEADER_H)) {
+		if (in(mx, my, x0, py, PANEL_W - SIDEBAR_W, HEADER_H)) {
 			dragging = true;
 			dragOX = mx - panelX;
 			dragOY = my - panelY;
 			return true;
+		}
+
+		// Sidebar category selection
+		if (in(mx, my, px, py + HEADER_H, SIDEBAR_W, panelHeight())) {
+			for (int i = 0; i < CATS.length; i++) {
+				int cy = py + HEADER_H + 8 + i * CAT_H;
+				if (in(mx, my, px, cy, SIDEBAR_W, CAT_H - 2)) {
+					if (activeCat != i) {
+						activeCat = i;
+						pageStart = 0;
+						rebuildRows();
+					}
+					return true;
+				}
+			}
 		}
 
 		// Rows
@@ -263,12 +348,12 @@ public class ClickGuiScreen extends Screen {
 			Row r = rows.get(i);
 			int y = rowYs[i];
 			int h = r.isModule ? MODULE_H : SETTING_H;
-			if (!in(mx, my, px, y, PANEL_W, h - 2)) {
+			if (!in(mx, my, x0, y, PANEL_W - SIDEBAR_W, h - 2)) {
 				continue;
 			}
 			if (r.isModule) {
-				// Expand zone on the far right
-				if (in(mx, my, px + PANEL_W - 18, y, 18, h - 2)) {
+				// Expand zone (right 18px)
+				if (in(mx, my, x1 - 18, y, 18, h - 2)) {
 					if (expanded.contains(r.module)) {
 						expanded.remove(r.module);
 					} else {
@@ -278,23 +363,29 @@ public class ClickGuiScreen extends Screen {
 					return true;
 				}
 				r.module.toggle();
+				if (r.module instanceof GuiModule gm) {
+					gm.syncToTheme();
+				}
 				announce(r.module.getName() + (r.module.isEnabled() ? " ON" : " OFF"));
 				return true;
 			} else {
 				SpyderSettings.Setting s = r.setting;
 				if (s instanceof SpyderSettings.CycleSetting cyc) {
 					cyc.next();
+					syncIfGuiEditor(r.module);
 					announce(cyc.display() + ": " + cyc.value());
 					return true;
 				} else if (s instanceof SpyderSettings.ToggleSetting tog) {
 					tog.toggle();
+					syncIfGuiEditor(r.module);
 					return true;
 				} else if (s instanceof SpyderSettings.RangeSetting rng) {
-					if (mx < px + PANEL_W / 2.0) {
+					if (mx < x0 + (PANEL_W - SIDEBAR_W) / 2.0) {
 						rng.decrement();
 					} else {
 						rng.increment();
 					}
+					syncIfGuiEditor(r.module);
 					return true;
 				}
 			}
@@ -305,14 +396,14 @@ public class ClickGuiScreen extends Screen {
 		for (int i = pageStart; i < visibleEnd; i++) {
 			contentH += rows.get(i).isModule ? MODULE_H : SETTING_H;
 		}
-		int footY = py + HEADER_H + 4 + contentH + 2;
-		if (pageStart > 0 && in(mx, my, px + PANEL_W - 44, footY - 2, 22, FOOTER_H + 2)) {
+		int footY = py + HEADER_H + 6 + contentH + 3;
+		if (pageStart > 0 && in(mx, my, x1 - 44, footY - 2, 22, FOOTER_H + 2)) {
 			int pageSize = Math.max(1, visibleEnd - pageStart);
 			pageStart = Math.max(0, pageStart - pageSize);
 			layout();
 			return true;
 		}
-		if (visibleEnd < rows.size() && in(mx, my, px + PANEL_W - 22, footY - 2, 22, FOOTER_H + 2)) {
+		if (visibleEnd < rows.size() && in(mx, my, x1 - 22, footY - 2, 22, FOOTER_H + 2)) {
 			pageStart = visibleEnd;
 			layout();
 			return true;
@@ -321,13 +412,25 @@ public class ClickGuiScreen extends Screen {
 		return super.mouseClicked(event, doubleClick);
 	}
 
+	private int panelHeight() {
+		int contentH = 0;
+		for (int i = pageStart; i < visibleEnd; i++) {
+			contentH += rows.get(i).isModule ? MODULE_H : SETTING_H;
+		}
+		return HEADER_H + 6 + contentH + FOOTER_H + 6;
+	}
+
+	private void syncIfGuiEditor(Module m) {
+		if (m instanceof GuiModule gm) {
+			gm.syncToTheme();
+		}
+	}
+
 	@Override
 	public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
-		double mx = event.x();
-		double my = event.y();
 		if (dragging) {
-			panelX = mx - dragOX;
-			panelY = my - dragOY;
+			panelX = event.x() - dragOX;
+			panelY = event.y() - dragOY;
 			clampPanel();
 			layout();
 			return true;
@@ -341,10 +444,19 @@ public class ClickGuiScreen extends Screen {
 		return super.mouseReleased(event);
 	}
 
+	@Override
+	public boolean keyPressed(KeyEvent event) {
+		if (event.key() == GLFW.GLFW_KEY_RIGHT_SHIFT) {
+			onClose();
+			return true;
+		}
+		return super.keyPressed(event);
+	}
+
 	private void announce(String message) {
 		if (this.minecraft != null && this.minecraft.player != null) {
 			this.minecraft.player.displayClientMessage(
-					Component.literal("§a§lSpyderClient §7» §f" + message), false);
+					Component.literal("§a§l" + GuiTheme.clientName + " §7» §f" + message), false);
 		}
 	}
 
