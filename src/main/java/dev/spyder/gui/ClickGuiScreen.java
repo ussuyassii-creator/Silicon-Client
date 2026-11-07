@@ -4,9 +4,10 @@ import dev.spyder.core.GuiTheme;
 import dev.spyder.core.SpyderSettings;
 import dev.spyder.module.Module;
 import dev.spyder.module.ModuleManager;
-import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
@@ -141,7 +142,7 @@ public class ClickGuiScreen extends Screen {
 		}
 
 		layout();
-		long time = Util.getMillis();
+		long time = System.currentTimeMillis();
 		int px = (int) panelX;
 		int py = (int) panelY;
 
@@ -235,7 +236,9 @@ public class ClickGuiScreen extends Screen {
 	}
 
 	@Override
-	public boolean mouseClicked(double mx, double my, int button) {
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		double mx = event.x();
+		double my = event.y();
 		layout();
 		int px = (int) panelX;
 		int py = (int) panelY;
@@ -314,34 +317,34 @@ public class ClickGuiScreen extends Screen {
 			return true;
 		}
 
-		return super.mouseClicked(mx, my, button);
+		return super.mouseClicked(event, doubleClick);
 	}
 
 	@Override
-	public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
+	public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
 		if (dragging) {
-			panelX = mx - dragOX;
-			panelY = my - dragOY;
+			panelX = event.x() - dragOX;
+			panelY = event.y() - dragOY;
 			clampPanel();
 			layout();
 			return true;
 		}
-		return super.mouseDragged(mx, my, button, dx, dy);
+		return super.mouseDragged(event, dx, dy);
 	}
 
 	@Override
-	public boolean mouseReleased(double mx, double my, int button) {
+	public boolean mouseReleased(MouseButtonEvent event) {
 		dragging = false;
-		return super.mouseReleased(mx, my, button);
+		return super.mouseReleased(event);
 	}
 
 	@Override
-	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-		if (keyCode == GLFW.GLFW_KEY_RIGHT_SHIFT) {
+	public boolean keyPressed(KeyEvent event) {
+		if (event.key() == GLFW.GLFW_KEY_RIGHT_SHIFT) {
 			onClose();
 			return true;
 		}
-		return super.keyPressed(keyCode, scanCode, modifiers);
+		return super.keyPressed(event);
 	}
 
 	private void announce(String message) {
