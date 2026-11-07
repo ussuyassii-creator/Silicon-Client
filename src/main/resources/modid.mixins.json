@@ -1,14 +1,9 @@
 {
-	"required": true,
-	"package": "com.example.mixin",
-	"compatibilityLevel": "JAVA_8",
-	"mixins": [
-		"ExampleMixin"
-	],
+	"required": false,
+	"package": "dev.spyder.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [],
 	"injectors": {
-		"defaultRequire": 1
-	},
-	"overwrites": {
-		"requireAnnotations": true
+		"defaultRequire": 0
 	}
 }
