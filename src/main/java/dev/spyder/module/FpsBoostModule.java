@@ -68,7 +68,7 @@ public class FpsBoostModule extends Module {
 		if ("Custom".equals(profile.value())) {
 			client.options.renderDistance().set((int) renderDist.value());
 			client.options.simulationDistance().set((int) simDist.value());
-			client.options.entityDistanceScaling().set(entityScale.value());
+			client.options.entityDistanceScaling().set((double) entityScale.value());
 		}
 	}
 
