@@ -7,13 +7,15 @@ import dev.spyder.core.SpyderSettings.ToggleSetting;
 
 /**
  * GUI Editor - customize the look of the client GUI itself:
- * client name, accent color, background style (incl. cosmic), and animations.
+ * client name, accent color, background style (incl. cosmic),
+ * glass-window transparency, and animations.
  * Changing "Client name" rebrands the GUI header AND the HUD watermark live.
  */
 public class GuiModule extends Module {
 	public final CycleSetting clientName;
 	public final CycleSetting accentColor;
 	public final CycleSetting background;
+	public final RangeSetting opacity;
 	public final RangeSetting cosmicIntensity;
 	public final ToggleSetting showStars;
 
@@ -28,6 +30,7 @@ public class GuiModule extends Module {
 		this.background = cycle("background", "Background", new String[] {
 				"None", "Dark", "Blur", "Cosmic"
 		}, 3);
+		this.opacity = range("opacity", "Glass opacity", 0.4f, 1.0f, 0.05f, 0.95f);
 		this.cosmicIntensity = range("cosmic", "Cosmic intensity", 0f, 1f, 0.1f, 1.0f);
 		this.showStars = toggleSetting("stars", "Show stars", true);
 		syncToTheme();
@@ -35,6 +38,15 @@ public class GuiModule extends Module {
 
 	@Override
 	protected void onToggle() {
+	}
+
+	@Override
+	public void onTick() {
+		// Live-sync while enabled: the panel turns frosted/solid the instant
+		// the slider moves, no extra clicks needed.
+		if (isEnabled()) {
+			syncToTheme();
+		}
 	}
 
 	/**
@@ -60,6 +72,7 @@ public class GuiModule extends Module {
 			case "Blur" -> GuiTheme.background = GuiTheme.Background.BLUR;
 			default -> GuiTheme.background = GuiTheme.Background.COSMIC;
 		}
+		GuiTheme.panelOpacity = opacity.value();
 		GuiTheme.cosmicIntensity = cosmicIntensity.value();
 		GuiTheme.showStars = showStars.value();
 	}
