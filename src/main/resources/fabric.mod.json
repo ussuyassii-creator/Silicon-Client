@@ -1,31 +1,27 @@
 {
 	"schemaVersion": 1,
-	"id": "modid",
+	"id": "spyderclient",
 	"version": "${version}",
-	"name": "Example Mod",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"name": "SpyderClient",
+	"description": "A client-side visual and optimization mod for Minecraft. Built for smooth performance on low-end and mobile devices.",
 	"authors": [
-		"Me!"
+		"SpyderRishad"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://github.com/ussuyassii-creator/Silicon-Client",
+		"sources": "https://github.com/ussuyassii-creator/Silicon-Client"
 	},
-	"license": "CC0-1.0",
-	"icon": "assets/modid/icon.png",
-	"environment": "*",
+	"license": "MIT",
+	"environment": "client",
 	"entrypoints": {
 		"main": [
-			"com.example.ExampleMod"
+			"dev.spyder.SpyderClient"
 		]
 	},
-	"mixins": [
-		"modid.mixins.json"
-	],
 	"depends": {
 		"fabricloader": ">=0.20.1",
-		"minecraft": "~1.14.4",
-		"java": ">=8",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
 		"fabric": "*"
 	}
 }
