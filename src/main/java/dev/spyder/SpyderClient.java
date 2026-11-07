@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -14,6 +15,11 @@ import org.lwjgl.glfw.GLFW;
  */
 public class SpyderClient implements ClientModInitializer {
 	public static final String MOD_ID = "spyderclient";
+
+	// 1.21.9+ requires a KeyMapping.Category object, not a String.
+	// Translation key for this category: key.category.spyderclient.main
+	public static final KeyMapping.Category SPYDER_CATEGORY =
+			new KeyMapping.Category(ResourceLocation.fromNamespaceAndPath(MOD_ID, "main"));
 
 	private static KeyMapping pingKey;
 	private boolean wasPressed = false;
@@ -25,7 +31,7 @@ public class SpyderClient implements ClientModInitializer {
 				"key.spyderclient.ping",
 				InputConstants.Type.KEYSYM,
 				GLFW.GLFW_KEY_R,
-				"category.spyderclient"));
+				SPYDER_CATEGORY));
 
 		// Fired once per client tick (20x/sec) - only checks a boolean, so cost is ~zero
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
