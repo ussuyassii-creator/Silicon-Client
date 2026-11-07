@@ -2,7 +2,6 @@ package dev.spyder;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.spyder.gui.ClickGuiScreen;
-import dev.spyder.module.Module;
 import dev.spyder.module.ModuleManager;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -14,7 +13,7 @@ import org.lwjgl.glfw.GLFW;
 
 /**
  * SpyderClient - entrypoint.
- * R = proof-of-life ping. Right Shift = open/close ClickGUI.
+ * R = proof-of-life ping. Right Shift = open ClickGUI.
  */
 public class SpyderClient implements ClientModInitializer {
 	public static final String MOD_ID = "spyderclient";
@@ -56,20 +55,9 @@ public class SpyderClient implements ClientModInitializer {
 
 			boolean guiPressed = guiKey.isDown();
 			if (guiPressed && !wasGuiPressed && client.player != null) {
-				if (client.screen instanceof ClickGuiScreen) {
-					client.setScreen(null);
-				} else {
-					client.setScreen(new ClickGuiScreen());
-				}
+				client.setScreen(new ClickGuiScreen());
 			}
 			wasGuiPressed = guiPressed;
-
-			// Tick enabled modules (future modules will hook their logic here)
-			for (Module module : ModuleManager.modules()) {
-				if (module.isEnabled()) {
-					module.onTick();
-				}
-			}
 		});
 	}
 }
