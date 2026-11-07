@@ -1,67 +1,29 @@
 package dev.spyder.module;
 
+import dev.spyder.core.SpyderSettings.CycleSetting;
+import dev.spyder.core.SpyderSettings.RangeSetting;
+import dev.spyder.core.SpyderSettings.ToggleSetting;
+
 /**
  * Swing - custom hand swing animations.
- * 24 styles replace the vanilla chop when enabled.
+ * 32 styles selectable from the settings screen, plus speed and
+ * smoothness controls. All animation math lives in AnimationStyles.
  */
 public class SwingModule extends Module {
-	public enum Style {
-		CHOP("Chop"),
-		FORTNITE("Fortnite"),
-		SPIN_SLASH("Spin Slash"),
-		HELIX("Helix"),
-		WAVE("Wave"),
-		HELICOPTER("Helicopter"),
-		ONE_TWO("One-Two"),
-		PUNCH_OUT("Punch Out"),
-		HELIX_SLASH("Helix Slash"),
-		WAVE_SLASH("Wave Slash"),
-		REVERSE("Reverse"),
-		SMOOTH("Smooth"),
-		STAB("Stab"),
-		KATANA("Katana"),
-		UPPERCUT("Uppercut"),
-		BACKHAND("Backhand"),
-		HAMMER("Hammer"),
-		RIPPLE("Ripple"),
-		FLICK("Flick"),
-		TORNADO("Tornado"),
-		DRILL("Drill"),
-		ZEN("Zen"),
-		GRAVITY("Gravity"),
-		RICOCHET("Ricochet");
-
-		private final String label;
-
-		Style(String label) {
-			this.label = label;
-		}
-
-		public String getLabel() {
-			return label;
-		}
-
-		public Style next() {
-			Style[] values = values();
-			return values[(this.ordinal() + 1) % values.length];
-		}
-	}
-
-	private Style style = Style.FORTNITE;
+	public final CycleSetting style;
+	public final RangeSetting speed;
+	public final ToggleSetting smooth;
 
 	public SwingModule() {
 		super("Swing", "Custom hand swing animations");
-	}
-
-	public Style getStyle() {
-		return style;
-	}
-
-	public void setStyle(Style style) {
-		this.style = style;
-	}
-
-	public void cycleStyle() {
-		style = style.next();
+		this.style = cycle("style", "Style", new String[] {
+			"Classic", "Chop", "Slash", "Spin", "Wave", "Flick", "Snappy",
+			"Twist", "Helix", "Ninja", "Smooth", "Slow-Mo", "Fortnite", "Cursed",
+			"Overhead", "Underhand", "Frenzy", "Wobble", "Punch", "Boxing",
+			"Stab", "Swipe", "Whirl", "Bounce", "Elastic", "Noodle", "Hammer",
+			"Swordmaster", "Flail", "Glitch", "Vortex", "Magnet"
+		}, 12);
+		this.speed = range("speed", "Speed", 0.25f, 2.0f, 0.25f, 1.0f);
+		this.smooth = toggleSetting("smooth", "Smooth", true);
 	}
 }
