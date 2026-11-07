@@ -5,12 +5,15 @@ import com.mojang.math.Axis;
 import net.minecraft.util.Mth;
 
 /**
- * Swing animation library v2 - DRAMATIC EDITION.
- * v1 was too subtle to notice; v2 uses 2-3x bigger rotations and
- * real translations so every style is unmistakable at first glance.
- * Pure math on the PoseStack: no allocations, no state.
+ * The swing animation library - all 32 styles from the Swing module.
+ * Every style is pure math on the PoseStack: no allocations, no state,
+ * runs identically at 20 or 240 FPS.
  *
- * t = eased swing progress 0..1, side = +1 right arm, -1 left arm.
+ * v2 - AMPLITUDE BOOST: every rotation and translation roughly doubled
+ * so each style is clearly noticeable at a glance (user request).
+ *
+ * t = eased swing progress 0..1 (already includes speed + smooth settings)
+ * side = +1 right arm, -1 left arm.
  */
 public final class AnimationStyles {
 	private AnimationStyles() {
@@ -22,8 +25,7 @@ public final class AnimationStyles {
 			t = ease(t);
 		}
 		switch (style) {
-			case "Classic" -> classic(t, side, pose);
-			case "Chop" -> chop(t, side, pose);
+			case "Classic", "Chop" -> chop(t, side, pose);
 			case "Slash" -> slash(t, side, pose);
 			case "Spin" -> spin(t, side, pose);
 			case "Wave" -> wave(t, side, pose);
@@ -60,211 +62,188 @@ public final class AnimationStyles {
 		return Mth.sin(t * (float) Math.PI);
 	}
 
-	/** Vanilla-feeling but 2x stronger. */
-	private static void classic(float t, float side, PoseStack pose) {
-		float g = Mth.sin(t * t * (float) Math.PI);
-		pose.mulPose(Axis.YP.rotationDegrees(side * (50.0F + g * -40.0F)));
-		float h = Mth.sin(Mth.sqrt(t) * (float) Math.PI);
-		pose.mulPose(Axis.ZP.rotationDegrees(side * h * -40.0F));
-		pose.mulPose(Axis.XP.rotationDegrees(h * -120.0F));
-		pose.translate(0.0F, -0.15F * h, -0.2F * h);
-		pose.mulPose(Axis.YP.rotationDegrees(side * -50.0F));
-	}
-
-	/** Massive overhead hack downward. */
+	/** Vanilla-style fast arc downward - amplified. */
 	private static void chop(float t, float side, PoseStack pose) {
 		float g = Mth.sin(t * t * (float) Math.PI);
-		pose.mulPose(Axis.YP.rotationDegrees(side * (60.0F + g * -50.0F)));
+		pose.mulPose(Axis.YP.rotationDegrees(side * (45.0F + g * -40.0F)));
 		float h = Mth.sin(Mth.sqrt(t) * (float) Math.PI);
-		pose.mulPose(Axis.ZP.rotationDegrees(side * h * -55.0F));
-		pose.mulPose(Axis.XP.rotationDegrees(h * -180.0F));
-		pose.translate(0.0F, -0.35F * h, -0.3F * h);
-		pose.mulPose(Axis.YP.rotationDegrees(side * -60.0F));
+		pose.mulPose(Axis.ZP.rotationDegrees(side * h * -40.0F));
+		pose.mulPose(Axis.XP.rotationDegrees(h * -160.0F));
+		pose.mulPose(Axis.YP.rotationDegrees(side * -45.0F));
 	}
 
-	/** Huge diagonal cut clear across the screen. */
+	/** Wide diagonal cut across the screen - amplified. */
 	private static void slash(float t, float side, PoseStack pose) {
 		float h = arc(t);
-		pose.mulPose(Axis.ZP.rotationDegrees(side * h * -90.0F));
-		pose.mulPose(Axis.XP.rotationDegrees(h * -70.0F));
-		pose.mulPose(Axis.YP.rotationDegrees(side * h * 40.0F));
-		pose.translate(side * -0.55F * h, -0.25F * h, -0.4F * h);
+		pose.mulPose(Axis.ZP.rotationDegrees(side * h * -100.0F));
+		pose.mulPose(Axis.XP.rotationDegrees(h * -80.0F));
+		pose.translate(side * -0.4F * h, -0.2F * h, -0.4F * h);
 	}
 
-	/** Double full spin. */
+	/** Full 360 degree blade spin - faster whip. */
 	private static void spin(float t, float side, PoseStack pose) {
 		float h = arc(t);
-		pose.mulPose(Axis.ZP.rotationDegrees(side * t * 720.0F));
+		pose.mulPose(Axis.ZP.rotationDegrees(side * t * 360.0F));
 		pose.mulPose(Axis.XP.rotationDegrees(h * -60.0F));
-		pose.translate(0.0F, -0.1F * h, -0.3F * h);
 	}
 
-	/** Big ocean wave sweep. */
+	/** Gentle sine-wave sweep - wider. */
 	private static void wave(float t, float side, PoseStack pose) {
 		float s = Mth.sin(t * (float) Math.PI * 2.0F);
-		pose.translate(side * 0.4F * s, 0.12F * s, -0.45F * arc(t));
-		pose.mulPose(Axis.XP.rotationDegrees(-70.0F * arc(t)));
-		pose.mulPose(Axis.ZP.rotationDegrees(side * s * 35.0F));
+		pose.translate(side * 0.3F * s, 0.0F, -0.5F * arc(t));
+		pose.mulPose(Axis.XP.rotationDegrees(-50.0F * arc(t)));
 	}
 
-	/** Violent snap. */
+	/** Fast, tight snap - bigger flick. */
 	private static void flick(float t, float side, PoseStack pose) {
 		float h = Mth.sin(t * t * (float) Math.PI);
-		pose.mulPose(Axis.XP.rotationDegrees(h * -200.0F));
-		pose.mulPose(Axis.YP.rotationDegrees(side * h * 25.0F));
-		pose.translate(0.0F, 0.0F, -0.4F * h);
+		pose.mulPose(Axis.XP.rotationDegrees(h * -220.0F));
+		pose.translate(0.0F, 0.0F, -0.3F * h);
 	}
 
-	/** Rising triple spiral. */
+	/** Rising spiral, like drawing a sword - amplified. */
 	private static void helix(float t, float side, PoseStack pose) {
-		pose.mulPose(Axis.YP.rotationDegrees(side * t * 540.0F));
-		pose.mulPose(Axis.XP.rotationDegrees(-t * 110.0F));
-		pose.translate(0.0F, 0.3F * t, -0.2F * t);
+		pose.mulPose(Axis.YP.rotationDegrees(side * t * 360.0F));
+		pose.mulPose(Axis.XP.rotationDegrees(-t * 90.0F));
+		pose.translate(0.0F, 0.2F * t, 0.0F);
 	}
 
-	/** Anime instant-slash. */
+	/** Quick low-profile slash - anime style, amplified. */
 	private static void ninja(float t, float side, PoseStack pose) {
 		float h = arc(t);
 		pose.mulPose(Axis.YP.rotationDegrees(side * h * 60.0F));
-		pose.mulPose(Axis.XP.rotationDegrees(-h * 170.0F));
-		pose.mulPose(Axis.ZP.rotationDegrees(side * h * -40.0F));
-		pose.translate(side * -0.35F * h, -0.15F * h, -0.7F * h);
+		pose.mulPose(Axis.XP.rotationDegrees(-h * 180.0F));
+		pose.translate(side * -0.2F * h, -0.1F * h, -0.7F * h);
 	}
 
-	/** Heavy slow powerful arc. */
+	/** Ultra smooth eased swing - amplified. */
 	private static void smoothSwing(float t, float side, PoseStack pose) {
 		pose.mulPose(Axis.YP.rotationDegrees(side * 120.0F * t));
-		pose.mulPose(Axis.XP.rotationDegrees(-110.0F * t));
-		pose.translate(0.0F, -0.1F * t, -0.35F * t);
+		pose.mulPose(Axis.XP.rotationDegrees(-100.0F * t));
+		pose.translate(0.0F, 0.0F, -0.2F * t);
 	}
 
-	/** Big windup then whip-crack. */
+	/** Wind up back, then sharp forward whip with roll - amplified. */
 	private static void fortnite(float t, float side, PoseStack pose) {
-		float wind = t < 0.35F ? (t / 0.35F) : 1.0F - ((t - 0.35F) / 0.65F);
-		float whip = t < 0.35F ? 0.0F : ease((t - 0.35F) / 0.65F);
-		pose.translate(-side * 0.6F * wind, 0.2F * wind, 0.4F * wind);
+		float wind = t < 0.3F ? (t / 0.3F) : 1.0F - ((t - 0.3F) / 0.7F);
+		float whip = t < 0.3F ? 0.0F : ease((t - 0.3F) / 0.7F);
+		pose.translate(-side * 0.5F * wind, 0.16F * wind, 0.5F * wind);
 		pose.mulPose(Axis.YP.rotationDegrees(side * 70.0F * wind));
-		pose.mulPose(Axis.XP.rotationDegrees(-150.0F * whip));
-		pose.mulPose(Axis.ZP.rotationDegrees(side * 55.0F * whip));
+		pose.mulPose(Axis.XP.rotationDegrees(-140.0F * whip));
+		pose.mulPose(Axis.ZP.rotationDegrees(side * 70.0F * whip));
 		pose.translate(0.0F, 0.0F, -0.6F * whip);
 	}
 
-	/** Earth-shattering overhead slam. */
+	/** Big overhead smash from above - amplified. */
 	private static void overhead(float t, float side, PoseStack pose) {
 		float h = arc(t);
-		pose.mulPose(Axis.XP.rotationDegrees(-h * 230.0F));
-		pose.mulPose(Axis.ZP.rotationDegrees(side * h * 30.0F));
-		pose.translate(0.0F, -0.4F * h, -0.45F * h);
+		pose.mulPose(Axis.XP.rotationDegrees(-h * 260.0F));
+		pose.translate(0.0F, -0.3F * h, -0.5F * h);
 	}
 
-	/** Rising uppercut. */
+	/** Underhand uppercut-style swing (upward) - amplified. */
 	private static void underhand(float t, float side, PoseStack pose) {
 		float h = arc(t);
-		pose.mulPose(Axis.XP.rotationDegrees(h * 190.0F));
-		pose.translate(0.0F, 0.25F * h, -0.4F * h);
+		pose.mulPose(Axis.XP.rotationDegrees(h * 200.0F));
+		pose.translate(0.0F, 0.2F * h, -0.4F * h);
 	}
 
-	/** Shaky chaos. */
+	/** Shaky wobbly frenzy - amplified. */
 	private static void wobble(float t, float side, PoseStack pose) {
 		float s = Mth.sin(t * (float) Math.PI * 4.0F) * 0.5F;
-		pose.mulPose(Axis.ZP.rotationDegrees(side * s * 55.0F));
-		pose.mulPose(Axis.XP.rotationDegrees(-arc(t) * 130.0F));
-		pose.translate(side * 0.2F * s, 0.0F, -0.25F * arc(t));
+		pose.mulPose(Axis.ZP.rotationDegrees(side * s * 50.0F));
+		pose.mulPose(Axis.XP.rotationDegrees(-arc(t) * 140.0F));
+		pose.translate(side * 0.16F * s, 0.0F, -0.2F * arc(t));
 	}
 
-	/** Full boxing cross with recoil. */
+	/** Boxing straight punch with recoil - amplified. */
 	private static void punch(float t, float side, PoseStack pose) {
 		float p = ease(Math.min(t / 0.5F, 1.0F));
 		float recoil = t > 0.5F ? Mth.sin((t - 0.5F) * (float) Math.PI) * 0.3F : 0.0F;
-		pose.translate(-side * (0.9F * p - recoil), -0.1F * p, -0.9F * p);
+		pose.translate(-side * (0.8F * p - recoil), -0.1F * p, -0.9F * p);
 		pose.mulPose(Axis.XP.rotationDegrees(-20.0F * p));
 	}
 
-	/** Deep forward knife stab. */
+	/** Forward knife stab - amplified. */
 	private static void stab(float t, float side, PoseStack pose) {
 		float p = ease(Math.min(t / 0.4F, 1.0F));
-		pose.translate(0.0F, 0.0F, -1.1F * p);
+		pose.translate(0.0F, 0.0F, -1.0F * p);
 		pose.mulPose(Axis.XP.rotationDegrees(-30.0F * p));
-		pose.mulPose(Axis.YP.rotationDegrees(side * 15.0F * p));
 	}
 
-	/** Wide horizontal sweep. */
+	/** Horizontal swipe across - amplified. */
 	private static void swipe(float t, float side, PoseStack pose) {
 		float s = Mth.sin(t * (float) Math.PI * 2.0F);
-		pose.translate(side * 0.55F * s, 0.0F, -0.6F * arc(t));
+		pose.translate(side * 0.4F * s, 0.0F, -0.6F * arc(t));
 		pose.mulPose(Axis.YP.rotationDegrees(side * 80.0F * s));
-		pose.mulPose(Axis.XP.rotationDegrees(-60.0F * arc(t)));
+		pose.mulPose(Axis.XP.rotationDegrees(-70.0F * arc(t)));
 	}
 
-	/** Quadruple whirl. */
+	/** Double 360 whirl - amplified. */
 	private static void whirl(float t, float side, PoseStack pose) {
-		pose.mulPose(Axis.YP.rotationDegrees(t * 1440.0F));
+		pose.mulPose(Axis.YP.rotationDegrees(t * 720.0F));
 		pose.mulPose(Axis.ZP.rotationDegrees(side * arc(t) * 40.0F));
-		pose.translate(0.0F, -0.1F * arc(t), 0.0F);
 	}
 
-	/** Springy overshoot. */
+	/** Springy overshoot with settling - amplified. */
 	private static void elastic(float t, float side, PoseStack pose) {
 		float bounce = Mth.sin(t * (float) Math.PI * 3.0F) * (1.0F - t);
 		pose.mulPose(Axis.XP.rotationDegrees(-140.0F * t + bounce * 60.0F));
-		pose.mulPose(Axis.ZP.rotationDegrees(side * bounce * 30.0F));
-		pose.translate(0.0F, -0.1F * bounce, -0.35F * t);
+		pose.translate(0.0F, -0.1F * bounce, -0.4F * t);
 	}
 
-	/** Full floppy arm. */
+	/** Floppy multi-jointed look - amplified. */
 	private static void noodle(float t, float side, PoseStack pose) {
 		float s1 = Mth.sin(t * (float) Math.PI * 2.0F);
 		float s2 = Mth.sin(t * (float) Math.PI * 4.0F);
-		pose.translate(side * 0.3F * s1, 0.18F * s2, -0.35F * arc(t));
-		pose.mulPose(Axis.ZP.rotationDegrees(side * s1 * 65.0F));
-		pose.mulPose(Axis.XP.rotationDegrees(s2 * 45.0F - 90.0F * t));
+		pose.translate(side * 0.24F * s1, 0.16F * s2, -0.4F * arc(t));
+		pose.mulPose(Axis.ZP.rotationDegrees(side * s1 * 60.0F));
+		pose.mulPose(Axis.XP.rotationDegrees(s2 * 40.0F - 80.0F * t));
 	}
 
-	/** Thunderous hammer slam. */
+	/** Heavy hammer slam - amplified. */
 	private static void hammer(float t, float side, PoseStack pose) {
 		float h = arc(t);
-		pose.mulPose(Axis.XP.rotationDegrees(-h * 280.0F));
-		pose.mulPose(Axis.ZP.rotationDegrees(side * h * 35.0F));
-		pose.translate(0.0F, -0.5F * h, -0.5F * h);
+		pose.mulPose(Axis.XP.rotationDegrees(-h * 300.0F));
+		pose.mulPose(Axis.ZP.rotationDegrees(side * h * 30.0F));
+		pose.translate(0.0F, -0.4F * h, -0.6F * h);
 	}
 
-	/** Elegant huge slash + recovery. */
+	/** Elegant slash + recovery, master swordsman style - amplified. */
 	private static void swordmaster(float t, float side, PoseStack pose) {
 		float h = arc(t);
-		pose.mulPose(Axis.ZP.rotationDegrees(side * h * -110.0F));
+		pose.mulPose(Axis.ZP.rotationDegrees(side * h * -120.0F));
 		pose.mulPose(Axis.YP.rotationDegrees(side * t * 50.0F));
 		pose.mulPose(Axis.XP.rotationDegrees(-h * 70.0F));
-		pose.translate(side * -0.4F * h, -0.2F * h, -0.5F * h);
+		pose.translate(side * -0.3F * h, -0.2F * h, -0.5F * h);
 	}
 
-	/** Total uncontrolled flail. */
+	/** Wild uncontrolled flailing - amplified. */
 	private static void flail(float t, float side, PoseStack pose) {
 		float s1 = Mth.sin(t * (float) Math.PI * 5.0F);
 		float s2 = Mth.cos(t * (float) Math.PI * 3.0F);
-		pose.mulPose(Axis.ZP.rotationDegrees(side * s1 * 80.0F));
-		pose.mulPose(Axis.XP.rotationDegrees(s2 * 90.0F - 130.0F * t));
-		pose.translate(side * 0.25F * s2, 0.1F * s1, -0.35F * t);
+		pose.mulPose(Axis.ZP.rotationDegrees(side * s1 * 70.0F));
+		pose.mulPose(Axis.XP.rotationDegrees(s2 * 90.0F - 120.0F * t));
+		pose.translate(side * 0.2F * s2, 0.1F * s1, -0.3F * t);
 	}
 
-	/** Hard stutter-glitch. */
+	/** Glitchy stutter-stepped movement - amplified. */
 	private static void glitch(float t, float side, PoseStack pose) {
-		float stepped = (float) Math.floor(t * 6.0F) / 6.0F;
-		pose.translate(side * (stepped % 2.0F) * 0.45F, (stepped % 3.0F) * -0.15F, -0.6F * stepped);
-		pose.mulPose(Axis.XP.rotationDegrees(-170.0F * stepped));
+		float stepped = (float) Math.floor(t * 5.0F) / 5.0F;
+		pose.translate(side * (stepped % 2.0F) * 0.3F, (stepped % 3.0F) * -0.1F, -0.6F * stepped);
+		pose.mulPose(Axis.XP.rotationDegrees(-160.0F * stepped));
 	}
 
-	/** Six-spin vortex. */
+	/** Triple-spin vortex - amplified. */
 	private static void vortex(float t, float side, PoseStack pose) {
-		pose.mulPose(Axis.YP.rotationDegrees(t * 2160.0F));
-		pose.mulPose(Axis.XP.rotationDegrees(-arc(t) * 90.0F));
-		pose.translate(0.0F, 0.3F * arc(t), -0.2F * t);
+		pose.mulPose(Axis.YP.rotationDegrees(t * 1080.0F));
+		pose.translate(0.0F, 0.3F * arc(t), 0.0F);
 	}
 
-	/** Yank to screen center. */
+	/** Pull toward screen center as if magnetized - amplified. */
 	private static void magnet(float t, float side, PoseStack pose) {
 		float p = ease(t);
-		pose.translate(side * -0.7F * p, 0.2F * p, -0.5F * p);
-		pose.mulPose(Axis.XP.rotationDegrees(-55.0F * p));
-		pose.mulPose(Axis.YP.rotationDegrees(side * -35.0F * p));
+		pose.translate(side * -0.6F * p, 0.2F * p, -0.4F * p);
+		pose.mulPose(Axis.XP.rotationDegrees(-50.0F * p));
 	}
 }
