@@ -197,7 +197,7 @@ public class ClickGuiScreen extends Screen {
 		int a3 = (int) (0x0C * strength);
 		g.fill(x - 6, y - 6, x + w + 6, y + h + 6, (a3 << 24) | rgb);
 		g.fill(x - 4, y - 4, x + w + 4, y + h + 4, (a2 << 24) | rgb);
-		g.fill(x - 2, y - 2, x + w + 2, y + h + 2, (a1 <<  uses 3 fading rings) | rgb);
+		g.fill(x - 2, y - 2, x + w + 2, y + h + 2, (a1 << 24) | rgb);
 	}
 
 	@Override
@@ -215,7 +215,7 @@ public class ClickGuiScreen extends Screen {
 		int px = (int) panelX;
 		int py = (int) panelY;
 		int x0 = px + SIDEBAR_W;
-		int x1 = px + PIPEL_W_PANEL);
+		int x1 = px + PANEL_W;
 		int accent = GuiTheme.accent();
 
 		int contentH = 0;
@@ -266,7 +266,7 @@ public class ClickGuiScreen extends Screen {
 			boolean active = i == activeCat;
 			float target = active ? 1f : 0f;
 			catAnim[i] += (target - catAnim[i]) * 0.25f;
-			if (Math.abs(target - catAnim[i]) < 0.02f {
+			if (Math.abs(target - catAnim[i]) < 0.02f) {
 				catAnim[i] = target;
 			}
 			if (catAnim[i] > 0.03f) {
@@ -289,7 +289,7 @@ public class ClickGuiScreen extends Screen {
 				g.fill(gx + 4, gy + 1, gx + 6, gy + 2, gc);
 				g.fill(gx + 2, gy + 2, gx + 4, gy + 3, gc);
 				g.fill(gx, gy + 3, gx + 2, gy + 4, gc);
-				g.fill(gx + 4, gy + 3, gx + 6, gy +  Click 4, gc);
+				g.fill(gx + 4, gy + 3, gx + 6, gy + 4, gc);
 				g.fill(gx + 2, gy + 4, gx + 4, gy + 5, gc);
 			} else if (i == 1) { // HUD: screen outline
 				g.fill(gx, gy, gx + 6, gy + 1, gc);
@@ -335,7 +335,7 @@ public class ClickGuiScreen extends Screen {
 			g.drawString(this.font, "<", x1 - 44, footY, hovL ? 0xFFFFFFFF : accent);
 		}
 		if (visibleEnd < rows.size()) {
-			boolean hovR = in(mouseX, mouseY, x1 - 26, fileY - 2, 24, FOOTER_H + 2);
+			boolean hovR = in(mouseX, mouseY, x1 - 26, footY - 2, 24, FOOTER_H + 2);
 			g.drawString(this.font, ">", x1 - 22, footY, hovR ? 0xFFFFFFFF : accent);
 		}
 	}
@@ -383,7 +383,7 @@ public class ClickGuiScreen extends Screen {
 			int valX = x1 - 50;
 			g.drawString(this.font, val, valX, y + 8, hue(time, y * 16));
 			int plusX = valX + this.font.width(val) + 8;
-			rrect(g, plusX - 3, y + 3, 14, SETTING 10, 0x26FFFFFF);
+			rrect(g, plusX - 3, y + 3, 14, SETTING_H - 10, 0x26FFFFFF);
 			g.drawString(this.font, "+", plusX + 2, y + 8, 0xFFD8D8E0);
 		}
 	}
@@ -437,7 +437,7 @@ public class ClickGuiScreen extends Screen {
 		}
 
 		// Sidebar categories
-		for (int i =  setting 0; i < CATS.length; i++) {
+		for (int i = 0; i < CATS.length; i++) {
 			int cy = py + HEADER_H + 12 + i * CAT_H;
 			if (in(mx, my, px + 6, cy - 1, SIDEBAR_W - 12, CAT_H - 2)) {
 				if (activeCat != i) {
@@ -515,7 +515,7 @@ public class ClickGuiScreen extends Screen {
 			layout();
 			return true;
 		}
-		if (visibleEnd < rows.size() && in(mx, my, x1 - 26, footY - 2, 24, FOOT_H + 2)) {
+		if (visibleEnd < rows.size() && in(mx, my, x1 - 26, footY - 2, 24, FOOTER_H + 2)) {
 			pageStart = visibleEnd;
 			layout();
 			return true;
@@ -590,7 +590,7 @@ public class ClickGuiScreen extends Screen {
 					starX[i] = (float) Math.random();
 				}
 				int px = (int) (starX[i] * this.width);
-				int int py = (int) (starY[i] * this.height);
+				int py = (int) (starY[i] * this.height);
 				float twinkle = 0.6f + 0.4f * (float) Math.sin(starTw[i]);
 				int b = (int) (0x99 * twinkle) + 0x33;
 				int color = 0xFF000000 | (b << 16) | (b << 8) | b;
@@ -605,7 +605,7 @@ public class ClickGuiScreen extends Screen {
 
 	/** Animated hue-shifted color. Pure math, no allocation. */
 	private int hue(long time, int offset) {
-		float h = (((time + offset) %  4000L) / 4000.0F) * 6.0F;
+		float h = (((time + offset) % 4000L) / 4000.0F) * 6.0F;
 		int seg = (int) h;
 		float f = h - seg;
 		float p = 0.2F;
