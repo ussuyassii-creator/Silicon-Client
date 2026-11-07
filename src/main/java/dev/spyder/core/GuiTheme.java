@@ -1,27 +1,64 @@
 package dev.spyder.core;
 
 /**
- * GUI theme engine. All colors + the animated cosmic background live here.
- * The GUI module mutates these values; the ClickGUI and HUD read them every
- * frame straight from statics - no allocation, no lookups, no lag.
+ * GUI theme engine v2 - preset palettes + live theming.
+ * Seven built-in color combos; each preset sets the accent color AND a
+ * matching tinted panel body so the whole GUI recolors coherently.
+ * The GUI reads these statics every frame - no allocation, no lag.
  */
 public final class GuiTheme {
 	public enum Background {
 		NONE, DARK, BLUR, COSMIC
 	}
 
-	public static int accentR = 0x2E; // #2EE86C green
+	/** Built-in preset names, shown in the GUI's SETTINGS section. */
+	public static final String[] PRESET_NAMES = {
+			"Midnight", "Vaporwave", "Sakura", "Oceanic", "Blood Moon", "Golden", "Mono"
+	};
+
+	/** Per preset: accent r, g, b + panel body argb. */
+	private static final int[][] PRESETS = {
+			{0x2E, 0xE8, 0x6C, 0xFF10151A}, // Midnight - green on deep slate
+			{0xB4, 0x6B, 0xFF, 0xFF151021}, // Vaporwave - purple on plum black
+			{0xFF, 0x77, 0xB9, 0xFF1A1016}, // Sakura - pink on rose black
+			{0x3D, 0xC8, 0xFF, 0xFF0E141C}, // Oceanic - cyan on abyss blue
+			{0xFF, 0x4C, 0x55, 0xFF1A0F10}, // Blood Moon - red on ember black
+			{0xFF, 0xD7, 0x5A, 0xFF181410}, // Golden - gold on umber black
+			{0xE8, 0xE8, 0xEC, 0xFF131317}, // Mono - white on graphite
+	};
+
+	public static int accentR = 0x2E;
 	public static int accentG = 0xE8;
 	public static int accentB = 0x6C;
+	public static int panelBody = 0xFF10151A;
 	public static Background background = Background.COSMIC;
 	public static float cosmicIntensity = 1.0f;
 	public static boolean showStars = true;
 	public static String clientName = "SPYDER";
 	public static String version = "0.2.0";
-	/** Glass-window panel transparency: 0.4 (frosted) .. 1.0 (solid). */
-	public static float panelOpacity = 0.95f;
 
 	private GuiTheme() {
+	}
+
+	/** Accent color (argb) of a preset by index, without applying it. */
+	public static int presetAccent(int idx) {
+		if (idx < 0 || idx >= PRESETS.length) {
+			idx = 0;
+		}
+		int[] p = PRESETS[idx];
+		return 0xFF000000 | (p[0] << 16) | (p[1] << 8) | p[2];
+	}
+
+	/** Apply a preset by index: accent + panel tint together. */
+	public static void applyPreset(int idx) {
+		if (idx < 0 || idx >= PRESETS.length) {
+			idx = 0;
+		}
+		int[] p = PRESETS[idx];
+		accentR = p[0];
+		accentG = p[1];
+		accentB = p[2];
+		panelBody = p[3];
 	}
 
 	public static int accent() {
@@ -34,13 +71,6 @@ public final class GuiTheme {
 
 	public static int onOffColor(boolean on) {
 		return on ? accent() : 0xFF555555;
-	}
-
-	/** Scale an ARGB color's alpha by the glass opacity. */
-	public static int glass(int argb) {
-		int a = (argb >>> 24) & 0xFF;
-		int ga = (int) (a * panelOpacity);
-		return (ga << 24) | (argb & 0x00FFFFFF);
 	}
 
 	public static void cycleBackground() {
