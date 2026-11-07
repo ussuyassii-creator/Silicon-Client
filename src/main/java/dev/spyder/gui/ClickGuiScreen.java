@@ -6,10 +6,8 @@ import dev.spyder.module.Module;
 import dev.spyder.module.ModuleManager;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -23,8 +21,9 @@ import java.util.Set;
  * - Module rows with colored ON/OFF pills
  * - Inline expandable settings (cycle/toggle/range) right under each module
  * - Cosmic starfield background with twinkle
- * - Right Shift closes the GUI too
  * - Lag-free: statics + reused arrays, nothing allocated per frame
+ *
+ * Built for the 1.21.11 input API (MouseButtonEvent signatures).
  */
 public class ClickGuiScreen extends Screen {
 	private static final int PANEL_W = 240;
@@ -194,7 +193,7 @@ public class ClickGuiScreen extends Screen {
 	private void drawModuleRow(GuiGraphics g, Module m, int px, int y, long time) {
 		// Row background
 		g.fill(px + 4, y, px + PANEL_W - 4, y + MODULE_H - 3, 0x16FFFFFF);
-		// Accent edge (green when ON, dark when OFF)
+		// Accent edge (accent when ON, dark when OFF)
 		g.fill(px + 4, y, px + 6, y + MODULE_H - 3, m.isEnabled() ? GuiTheme.accent() : 0xFF3A3A3A);
 		// Name
 		g.drawString(this.font, m.getName(), px + 12, y + 9, m.isEnabled() ? 0xFFFFFFFF : 0xFFB0B0B0);
@@ -234,6 +233,8 @@ public class ClickGuiScreen extends Screen {
 			g.drawString(this.font, "+", px + PANEL_W - 16, y + 7, 0xFFDDDDDD);
 		}
 	}
+
+	// ---- 1.21.11 input API: MouseButtonEvent-based handlers ----
 
 	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
@@ -322,9 +323,11 @@ public class ClickGuiScreen extends Screen {
 
 	@Override
 	public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+		double mx = event.x();
+		double my = event.y();
 		if (dragging) {
-			panelX = event.x() - dragOX;
-			panelY = event.y() - dragOY;
+			panelX = mx - dragOX;
+			panelY = my - dragOY;
 			clampPanel();
 			layout();
 			return true;
@@ -336,15 +339,6 @@ public class ClickGuiScreen extends Screen {
 	public boolean mouseReleased(MouseButtonEvent event) {
 		dragging = false;
 		return super.mouseReleased(event);
-	}
-
-	@Override
-	public boolean keyPressed(KeyEvent event) {
-		if (event.key() == GLFW.GLFW_KEY_RIGHT_SHIFT) {
-			onClose();
-			return true;
-		}
-		return super.keyPressed(event);
 	}
 
 	private void announce(String message) {
@@ -389,7 +383,7 @@ public class ClickGuiScreen extends Screen {
 
 	/** Animated hue-shifted color. Pure math, no allocation. */
 	private int hue(long time, int offset) {
-		float h = (((time + offset * 6L) % 4000L) / 4000.0F) * 6.0F;
+		float h = (((time + offset) % 4000L) / 4000.0F) * 6.0F;
 		int seg = (int) h;
 		float f = h - seg;
 		float p = 0.2F;
