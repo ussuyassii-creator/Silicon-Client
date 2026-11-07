@@ -1,4 +1,4 @@
 {
-	"category.spyderclient": "SpyderClient",
+	"key.category.spyderclient.main": "SpyderClient",
 	"key.spyderclient.ping": "Ping (test key)"
 }
