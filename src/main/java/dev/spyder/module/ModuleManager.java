@@ -21,6 +21,7 @@ public final class ModuleManager {
 		register(new HandShaderModule());
 		register(new CosmeticsModule());
 		register(new GuiModule());
+		register(new HudModule());
 	}
 
 	public static void register(Module module) {
