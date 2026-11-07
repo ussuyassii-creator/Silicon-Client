@@ -15,26 +15,28 @@ public final class ModuleManager {
 	}
 
 	public static void init() {
-		// Register modules here. Swing first; Ambient, Skybox, HandShader,
-		// GUI extras and Cosmetics will follow in later milestones.
 		register(new SwingModule());
+		register(new AmbientModule());
+		register(new SkyboxModule());
+		register(new HandShaderModule());
+		register(new CosmeticsModule());
+		register(new GuiModule());
 	}
 
 	public static void register(Module module) {
 		MODULES.add(module);
 	}
 
-	/** Lookup a registered module by class. Returns null if not registered. */
-	public static <T extends Module> T get(Class<T> type) {
+	public static List<Module> modules() {
+		return Collections.unmodifiableList(MODULES);
+	}
+
+	public static Module byName(String name) {
 		for (Module module : MODULES) {
-			if (type.isInstance(module)) {
-				return type.cast(module);
+			if (module.getName().equalsIgnoreCase(name)) {
+				return module;
 			}
 		}
 		return null;
-	}
-
-	public static List<Module> modules() {
-		return Collections.unmodifiableList(MODULES);
 	}
 }
