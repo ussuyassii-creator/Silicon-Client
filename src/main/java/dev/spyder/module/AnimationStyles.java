@@ -29,6 +29,18 @@ public final class AnimationStyles {
 			case WAVE_SLASH -> applyWaveSlash(p, side, pose);
 			case REVERSE -> applyReverse(p, side, pose);
 			case SMOOTH -> applySmooth(p, side, pose);
+			case STAB -> applyStab(p, side, pose);
+			case KATANA -> applyKatana(p, side, pose);
+			case UPPERCUT -> applyUppercut(p, side, pose);
+			case BACKHAND -> applyBackhand(p, side, pose);
+			case HAMMER -> applyHammer(p, side, pose);
+			case RIPPLE -> applyRipple(p, side, pose);
+			case FLICK -> applyFlick(p, side, pose);
+			case TORNADO -> applyTornado(p, side, pose);
+			case DRILL -> applyDrill(p, side, pose);
+			case ZEN -> applyZen(p, side, pose);
+			case GRAVITY -> applyGravity(p, side, pose);
+			case RICOCHET -> applyRicochet(p, side, pose);
 		}
 	}
 
@@ -130,5 +142,95 @@ public final class AnimationStyles {
 		pose.mulPose(Axis.YP.rotationDegrees(side * 60.0F * t));
 		pose.mulPose(Axis.XP.rotationDegrees(-50.0F * t));
 		pose.translate(0.0F, 0.0F, -0.1F * t);
+	}
+
+	/** Spear-like forward thrust with a twist at the end. */
+	private static void applyStab(float p, float side, PoseStack pose) {
+		float thrust = Mth.sin(p * (float) Math.PI);
+		pose.translate(-side * 0.05F * thrust, -0.03F * thrust, -0.55F * thrust);
+		pose.mulPose(Axis.XP.rotationDegrees(-8.0F * thrust));
+		pose.mulPose(Axis.YP.rotationDegrees(side * 12.0F * thrust));
+	}
+
+	/** Katana draw: still windup, then one sharp diagonal cut. */
+	private static void applyKatana(float p, float side, PoseStack pose) {
+		float w = Math.min(p / 0.25F, 1.0F);
+		float s = p < 0.25F ? 0.0F : easeOut((p - 0.25F) / 0.75F);
+		pose.mulPose(Axis.YP.rotationDegrees(side * (-40.0F * w + 90.0F * s)));
+		pose.mulPose(Axis.ZP.rotationDegrees(side * 30.0F * s));
+		pose.translate(0.0F, 0.0F, -0.2F * s);
+	}
+
+	/** Rising uppercut: hand sweeps up through the arc. */
+	private static void applyUppercut(float p, float side, PoseStack pose) {
+		float u = Mth.sin(p * (float) Math.PI);
+		pose.translate(0.0F, -0.05F * u, 0.1F * u);
+		pose.mulPose(Axis.XP.rotationDegrees(60.0F * u));
+		pose.translate(0.0F, 0.2F * u, 0.0F);
+	}
+
+	/** Backhand slap: the chop mirrored horizontally. */
+	private static void applyBackhand(float p, float side, PoseStack pose) {
+		float t = easeOut(p);
+		pose.mulPose(Axis.YP.rotationDegrees(side * -70.0F * t));
+		pose.mulPose(Axis.ZP.rotationDegrees(side * 25.0F * t));
+	}
+
+	/** Overhead hammer smash: wind high, slam down, hold. */
+	private static void applyHammer(float p, float side, PoseStack pose) {
+		float w = p < 0.4F ? easeOut(p / 0.4F) : 1.0F - easeOut((p - 0.4F) / 0.6F);
+		pose.mulPose(Axis.ZP.rotationDegrees(side * -120.0F * w));
+		pose.mulPose(Axis.XP.rotationDegrees(30.0F * w));
+	}
+
+	/** Soft triple ripple: gentle sine sway, very chill. */
+	private static void applyRipple(float p, float side, PoseStack pose) {
+		float s = Mth.sin(p * (float) Math.PI * 3.0F);
+		pose.translate(side * 0.08F * s, 0.04F * Mth.sin(p * (float) Math.PI * 2.0F),
+				-0.1F * Mth.sin(p * (float) Math.PI));
+	}
+
+	/** Sniper bolt flick: tiny wrist snap, very quick. */
+	private static void applyFlick(float p, float side, PoseStack pose) {
+		float f = p < 0.2F ? 0.0F : easeOut((p - 0.2F) / 0.8F);
+		pose.mulPose(Axis.ZP.rotationDegrees(side * -45.0F * f));
+		pose.mulPose(Axis.XP.rotationDegrees(-20.0F * f));
+	}
+
+	/** Tornado: fast spin with a body wobble. */
+	private static void applyTornado(float p, float side, PoseStack pose) {
+		pose.mulPose(Axis.YP.rotationDegrees(easeOut(p) * 540.0F));
+		pose.mulPose(Axis.ZP.rotationDegrees(Mth.sin(p * (float) Math.PI * 2.0F) * 20.0F));
+	}
+
+	/** Drill: forward push while spinning like a screw. */
+	private static void applyDrill(float p, float side, PoseStack pose) {
+		float d = Mth.sin(p * (float) Math.PI);
+		pose.mulPose(Axis.ZP.rotationDegrees(p * 720.0F));
+		pose.translate(0.0F, 0.0F, -0.3F * d);
+	}
+
+	/** Zen: barely-there minimal motion, cleanest look. */
+	private static void applyZen(float p, float side, PoseStack pose) {
+		float t = easeOut(p);
+		pose.mulPose(Axis.XP.rotationDegrees(-20.0F * t));
+		pose.mulPose(Axis.YP.rotationDegrees(side * 15.0F * t));
+		pose.translate(0.0F, -0.03F * t, -0.05F * t);
+	}
+
+	/** Gravity: hand drops heavy, then floats back up. */
+	private static void applyGravity(float p, float side, PoseStack pose) {
+		float drop = Mth.sin(Math.min(p / 0.5F, 1.0F) * ((float) Math.PI / 2.0F));
+		float rise = p > 0.5F ? easeOut((p - 0.5F) / 0.5F) : 0.0F;
+		pose.translate(0.0F, 0.2F * drop - 0.25F * rise, -0.15F * rise);
+		pose.mulPose(Axis.XP.rotationDegrees(40.0F * drop - 60.0F * rise));
+	}
+
+	/** Ricochet: fast chop that overshoots and snaps back. */
+	private static void applyRicochet(float p, float side, PoseStack pose) {
+		float over = p > 0.7F ? Mth.sin((p - 0.7F) * ((float) Math.PI / 0.3F)) * 15.0F : 0.0F;
+		float q = Math.min(p * 1.4F, 1.0F);
+		applyChop(q, side, pose);
+		pose.mulPose(Axis.ZP.rotationDegrees(side * over));
 	}
 }
