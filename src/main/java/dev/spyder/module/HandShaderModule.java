@@ -1,24 +1,27 @@
 package dev.spyder.module;
 
 import dev.spyder.core.SpyderSettings.CycleSetting;
-import dev.spyder.core.SpyderSettings.ToggleSetting;
 import dev.spyder.core.SpyderSettings.RangeSetting;
 
 /**
- * HandShader - effects applied to your first-person hand and held item.
- * Rendering implementation lands with the hand shader mixin.
+ * HandShader ENGINE v2 - real visible first-person hand effects,
+ * applied every frame on top of the vanilla arm transform:
+ * - Liquid: flowing sine bob + roll
+ * - Holographic: scale pulse + tilt (hovering feel)
+ * - Realistic: subtle breathing sway
+ * - Prism: fast shimmer pulse + pull
+ * - Wave: rolling side-to-side
+ * Intensity slider scales all motion.
  */
 public class HandShaderModule extends Module {
 	public final CycleSetting effect;
 	public final RangeSetting intensity;
-	public final ToggleSetting onlyItems;
 
 	public HandShaderModule() {
-		super("HandShader", "Visual effects for your hand and held items");
+		super("HandShader", "Animated first-person hand effects");
 		this.effect = cycle("effect", "Effect", new String[] {
-				"None", "Liquid", "Holographic", "Realistic", "Prism", "Clone"
-		}, 0);
-		this.intensity = range("intensity", "Intensity", 0.1f, 1.0f, 0.1f, 0.5f);
-		this.onlyItems = toggleSetting("onlyitems", "Items only", false);
+				"None", "Liquid", "Holographic", "Realistic", "Prism", "Wave"
+		}, 1);
+		this.intensity = range("intensity", "Intensity", 0.1f, 1.0f, 0.1f, 0.6f);
 	}
 }
