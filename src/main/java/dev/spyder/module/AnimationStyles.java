@@ -1,8 +1,8 @@
 package dev.spyder.module;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.HumanoidArm;
 
 /**
  * The swing animation library. Every style is pure math on the PoseStack -
@@ -15,7 +15,7 @@ public final class AnimationStyles {
 	private AnimationStyles() {
 	}
 
-	public static void apply(SwingModule.Style style, float p, float side, com.mojang.blaze3d.vertex.PoseStack pose) {
+	public static void apply(SwingModule.Style style, float p, float side, PoseStack pose) {
 		switch (style) {
 			case CHOP -> applyChop(p, side, pose);
 			case FORTNITE -> applyFortnite(p, side, pose);
@@ -61,7 +61,7 @@ public final class AnimationStyles {
 	private static void applySpinSlash(float p, float side, PoseStack pose) {
 		float spin = easeOut(p) * 360.0F;
 		pose.mulPose(Axis.ZP.rotationDegrees(side * spin));
-		pose.mulPose(Axis.XP.rotationDegrees(-30.0F * Mth.sin(p * (float) Math.PI));
+		pose.mulPose(Axis.XP.rotationDegrees(-30.0F * Mth.sin(p * (float) Math.PI)));
 	}
 
 	/** Rising spiral motion, like drawing a sword upward. */
@@ -76,7 +76,7 @@ public final class AnimationStyles {
 	private static void applyWave(float p, float side, PoseStack pose) {
 		float s = Mth.sin(p * (float) Math.PI * 2.0F);
 		pose.translate(side * 0.15F * s, 0.0F, -0.25F * Mth.sin(p * (float) Math.PI));
-		pose.mulPose(Axis.XP.rotationDegrees(-25.0F * Mth.sin(p * (float) Math.PI));
+		pose.mulPose(Axis.XP.rotationDegrees(-25.0F * Mth.sin(p * (float) Math.PI)));
 	}
 
 	/** Wild full spin above the head. */
@@ -84,7 +84,6 @@ public final class AnimationStyles {
 		float spin = easeOut(p) * 720.0F;
 		pose.mulPose(Axis.YP.rotationDegrees(spin));
 		pose.translate(0.0F, 0.15F * Mth.sin(p * (float) Math.PI), 0.0F);
-	(PLACEHOLDER_MARK)
 	}
 
 	/** Double-tap jab combo: quick pull back, fast double jab forward. */
@@ -112,12 +111,12 @@ public final class AnimationStyles {
 	}
 
 	/** Wave + slash combined: horizontal sine sweep forward. */
-	private applyWaveSlash(float p, float side, PoseStack pose) {
+	private static void applyWaveSlash(float p, float side, PoseStack pose) {
 		float s = Mth.sin(p * (float) Math.PI * 2.0F);
 		float fwd = Mth.sin(p * (float) Math.PI);
 		pose.translate(side * 0.2F * s, 0.0F, -0.3F * fwd);
 		pose.mulPose(Axis.YP.rotationDegrees(side * 40.0F * s));
-		pose.mulPose(Axis.XP.rotationDegrees(-35.0F * fwd);
+		pose.mulPose(Axis.XP.rotationDegrees(-35.0F * fwd));
 	}
 
 	/** Vanilla backwards: the chop, but played in reverse. */
