@@ -5,7 +5,6 @@ import dev.spyder.core.SpyderSettings.RangeSetting;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.CloudStatus;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.GraphicsStatus;
 
 /**
  * FPS Boost ENGINE - REAL, REVERSIBLE performance optimizations.
@@ -13,10 +12,13 @@ import net.minecraft.client.GraphicsStatus;
  * 1.21.11 Options API. Your original values are saved on enable and
  * fully restored on disable - nothing is lost, nothing is faked.
  *
+ * (graphicsMode was removed from Options in 1.21.11, so graphics
+ * quality is intentionally not touched.)
+ *
  * Profiles:
- * - Mobile:    render 4, sim 5, entities 0.5, fast graphics, no clouds
- * - Balanced:  render 6, sim 7, entities 0.75, fast graphics, no clouds
- * - Max FPS:   render 4, sim 4, entities 0.25, fast graphics, no clouds
+ * - Mobile:    render 4, sim 5, entities 0.5, no clouds, vsync off
+ * - Balanced:  render 6, sim 7, entities 0.75, no clouds, vsync off
+ * - Max FPS:   render 4, sim 4, entities 0.25, no clouds, vsync off
  * - Custom:    use the sliders below
  */
 public class FpsBoostModule extends Module {
@@ -29,7 +31,6 @@ public class FpsBoostModule extends Module {
 	private int savedSim = -1;
 	private double savedEntity = -1;
 	private int savedClouds = -1;
-	private int savedGraphics = -1;
 	private boolean savedVsync = false;
 	private boolean savedPause = false;
 	private boolean applied = false;
@@ -82,7 +83,6 @@ public class FpsBoostModule extends Module {
 			savedSim = client.options.simulationDistance().get();
 			savedEntity = client.options.entityDistanceScaling().get();
 			savedClouds = client.options.cloudStatus().get().ordinal();
-			savedGraphics = client.options.graphicsMode().get().ordinal();
 			savedVsync = client.options.enableVsync().get();
 			savedPause = client.options.pauseOnLostFocus;
 			applied = true;
@@ -118,7 +118,6 @@ public class FpsBoostModule extends Module {
 		client.options.simulationDistance().set(sim);
 		client.options.entityDistanceScaling().set(entity);
 		client.options.cloudStatus().set(CloudStatus.OFF);
-		client.options.graphicsMode().set(GraphicsStatus.FAST);
 		client.options.enableVsync().set(false);
 		client.options.pauseOnLostFocus = false;
 	}
@@ -132,7 +131,6 @@ public class FpsBoostModule extends Module {
 		client.options.simulationDistance().set(savedSim);
 		client.options.entityDistanceScaling().set(savedEntity);
 		client.options.cloudStatus().set(CloudStatus.values()[savedClouds]);
-		client.options.graphicsMode().set(GraphicsStatus.values()[savedGraphics]);
 		client.options.enableVsync().set(savedVsync);
 		client.options.pauseOnLostFocus = savedPause;
 		applied = false;
