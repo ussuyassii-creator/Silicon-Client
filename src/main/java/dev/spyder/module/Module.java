@@ -1,13 +1,19 @@
 package dev.spyder.module;
 
+import dev.spyder.core.SpyderSettings;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Base class for all SpyderClient modules.
- * Extendable: future modules (Ambient, Skybox, HandShader, Cosmetics, ...)
- * just extend this and register themselves in ModuleManager.
+ * Modules declare settings in their constructor; the ClickGUI renders
+ * them automatically - new modules get their settings UI for free.
  */
 public class Module {
 	private final String name;
 	private final String description;
+	private final List<SpyderSettings.Setting> settings = new ArrayList<>();
 	private boolean enabled = false;
 
 	public Module(String name, String description) {
@@ -35,6 +41,32 @@ public class Module {
 
 	public void toggle() {
 		setEnabled(!enabled);
+	}
+
+	public void addSetting(SpyderSettings.Setting setting) {
+		settings.add(setting);
+	}
+
+	public List<SpyderSettings.Setting> settings() {
+		return Collections.unmodifiableList(settings);
+	}
+
+	protected SpyderSettings.CycleSetting cycle(String name, String display, String[] options, int defaultIndex) {
+		SpyderSettings.CycleSetting setting = new SpyderSettings.CycleSetting(name, display, options, defaultIndex);
+		addSetting(setting);
+		return setting;
+	}
+
+	protected SpyderSettings.ToggleSetting toggleSetting(String name, String display, boolean defaultValue) {
+		SpyderSettings.ToggleSetting setting = new SpyderSettings.ToggleSetting(name, display, defaultValue);
+		addSetting(setting);
+		return setting;
+	}
+
+	protected SpyderSettings.RangeSetting range(String name, String display, float min, float max, float step, float defaultValue) {
+		SpyderSettings.RangeSetting setting = new SpyderSettings.RangeSetting(name, display, min, max, step, defaultValue);
+		addSetting(setting);
+		return setting;
 	}
 
 	/** Called when the module is turned on or off. Override in subclasses. */
