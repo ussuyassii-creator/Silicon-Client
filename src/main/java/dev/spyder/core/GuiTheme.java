@@ -1,10 +1,9 @@
 package dev.spyder.core;
 
 /**
- * GUI theme engine v2 - preset palettes + live theming + glass window.
- * Seven built-in color combos; each preset sets the accent color AND a
- * matching tinted panel body so the whole GUI recolors coherently.
- * Glass-window transparency is controlled by panelOpacity (GUI Editor slider).
+ * GUI theme engine v3 "Orchard" - violet premium palette.
+ * Light purple + deep violet by default; seven presets for the SETTINGS
+ * section picker. Glass-window transparency preserved.
  * The GUI reads these statics every frame - no allocation, no lag.
  */
 public final class GuiTheme {
@@ -14,24 +13,24 @@ public final class GuiTheme {
 
 	/** Built-in preset names, shown in the GUI's SETTINGS section. */
 	public static final String[] PRESET_NAMES = {
-			"Midnight", "Vaporwave", "Sakura", "Oceanic", "Blood Moon", "Golden", "Mono"
+			"Orchard", "Amethyst", "Nebula", "Aurora", "Blossom", "Frost", "Ember"
 	};
 
 	/** Per preset: accent r, g, b + panel body argb. */
 	private static final int[][] PRESETS = {
-			{0x2E, 0xE8, 0x6C, 0xFF10151A}, // Midnight - green on deep slate
-			{0xB4, 0x6B, 0xFF, 0xFF151021}, // Vaporwave - purple on plum black
-			{0xFF, 0x77, 0xB9, 0xFF1A1016}, // Sakura - pink on rose black
-			{0x3D, 0xC8, 0xFF, 0xFF0E141C}, // Oceanic - cyan on abyss blue
-			{0xFF, 0x4C, 0x55, 0xFF1A0F10}, // Blood Moon - red on ember black
-			{0xFF, 0xD7, 0x5A, 0xFF181410}, // Golden - gold on umber black
-			{0xE8, 0xE8, 0xEC, 0xFF131317}, // Mono - white on graphite
+			{0xC4, 0x9B, 0xFF, 0xF215141E}, // Orchard - light purple on deep violet
+			{0xA7, 0x8B, 0xFA, 0xFF141020}, // Amethyst - soft violet on plum
+			{0x8E, 0x7B, 0xFF, 0xFF121226}, // Nebula - indigo on night blue
+			{0x8F, 0xE1, 0xD4, 0xFF0E1418}, // Aurora - mint on dark teal
+			{0xFF, 0x9E, 0xC7, 0xFF1A1016}, // Blossom - pink on rose black
+			{0xB7, 0xD9, 0xFF, 0xFF0E1220}, // Frost - ice blue on deep blue
+			{0xFF, 0x9E, 0x6C, 0xFF1A0F10}, // Ember - warm orange on ember black
 	};
 
-	public static int accentR = 0x2E;
-	public static int accentG = 0xE8;
-	public static int accentB = 0x6C;
-	public static int panelBody = 0xFF10151A;
+	public static int accentR = 0xC4;
+	public static int accentG = 0x9B;
+	public static int accentB = 0xFF;
+	public static int panelBody = 0xF215141E;
 	public static Background background = Background.COSMIC;
 	public static float cosmicIntensity = 1.0f;
 	public static boolean showStars = true;
