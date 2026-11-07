@@ -20,24 +20,21 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * ClickGUI v5 "Premium" - smooth, clean, rich, fully animated.
- * Every pixel hand-drawn; zero vanilla widgets.
- * - Rounded panels with soft drop shadow
- * - Bold animated title (double-layer draw, no pose scaling)
- * - Gradient-lit header strip that slowly shifts hue
- * - Row hover highlight with accent edge bar
- * - Glowing sliding switches that animate every toggle
- * - Settings rows slide in when a module expands
- * - Nebula bands + twinkling drifting stars background
- * - Sidebar with hand-drawn glyph icons + active category glow
+ * ClickGUI v6 "GLASS" - a real OS-style window:
+ * - Draggable by the header (window title bar)
+ * - RESIZABLE by dragging the corner grip (bottom-right)
+ * - Glass transparency controlled live from GUI Editor > Glass opacity
+ * - Window chrome: title bar, accent edge, close button, resize grip
+ * - Rounded panels, glow switches, hover highlights, slide-in settings,
+ *   nebula + star background - the full premium set
  * - Cosmetics module opens the 3D player-preview editor
  *
- * ONLY uses API calls proven in green builds: fill + int drawString.
- * Built for the 1.21.11 input API (MouseButtonEvent / KeyEvent).
+ * Only proven API: fill + int drawString + 1.21.11 input events.
  */
 public class ClickGuiScreen extends Screen {
+	private static final int MIN_W = 240;
+	private static final int MIN_H = 180;
 	private static final int SIDEBAR_W = 86;
-	private static final int PANEL_W = 292;
 	private static final int HEADER_H = 42;
 	private static final int MODULE_H = 30;
 	private static final int SETTING_H = 24;
@@ -45,6 +42,7 @@ public class ClickGuiScreen extends Screen {
 	private static final int CAT_H = 26;
 	private static final int SWITCH_W = 32;
 	private static final int SWITCH_H = 16;
+	private static final int GRIP_SIZE = 12;
 
 	private static final String[] CATS = {"VISUALS", "HUD", "CLIENT"};
 
@@ -56,11 +54,17 @@ public class ClickGuiScreen extends Screen {
 	private static final float[] starTw = new float[STAR_COUNT];
 	private static boolean starsInit = false;
 
-	private double panelX = 40;
-	private double panelY = 32;
+	// Window state
+	private int panelX = 40;
+	private int panelY = 32;
+	private int panelW = 292;
+	private int panelH = 320;
 	private boolean dragging;
-	private double dragOX;
-	private double dragOY;
+	private int dragOX;
+	private int dragOY;
+	private boolean resizing;
+	private int resizeOX;
+	private int resizeOY;
 
 	private int activeCat = 0;
 
@@ -107,7 +111,7 @@ public class ClickGuiScreen extends Screen {
 			}
 			starsInit = true;
 		}
-		clampPanel();
+		clampWindow();
 		rebuildRows();
 	}
 
@@ -152,8 +156,8 @@ public class ClickGuiScreen extends Screen {
 	}
 
 	private void layout() {
-		int top = (int) panelY + HEADER_H + 10;
-		int avail = this.height - top - FOOTER_H - 16;
+		int top = panelY + HEADER_H + 10;
+		int avail = panelH - HEADER_H - FOOTER_H - 26;
 		if (avail < MODULE_H) {
 			avail = MODULE_H;
 		}
@@ -171,9 +175,11 @@ public class ClickGuiScreen extends Screen {
 		visibleEnd = i;
 	}
 
-	private void clampPanel() {
-		panelX = Math.max(0, Math.min(panelX, Math.max(0, this.width - PANEL_W)));
-		panelY = Math.max(0, Math.min(panelY, Math.max(0, this.height - HEADER_H - 60)));
+	private void clampWindow() {
+		panelW = Math.max(MIN_W, Math.min(panelW, this.width));
+		panelH = Math.max(MIN_H, Math.min(panelH, this.height));
+		panelX = Math.max(0, Math.min(panelX, this.width - panelW));
+		panelY = Math.max(0, Math.min(panelY, this.height - HEADER_H - 30));
 	}
 
 	/** Rounded rectangle (radius ~4) via layered fills. */
@@ -212,32 +218,31 @@ public class ClickGuiScreen extends Screen {
 
 		layout();
 		long time = System.currentTimeMillis();
-		int px = (int) panelX;
-		int py = (int) panelY;
-		int x0 = px + SIDEBAR_W;
-		int x1 = px + PANEL_W;
+		int px = panelX;
+		int py = panelY;
+		int x1 = px + panelW;
 		int accent = GuiTheme.accent();
+		int x0 = px + SIDEBAR_W;
 
-		int contentH = 0;
-		for (int i = pageStart; i < visibleEnd; i++) {
-			contentH += rows.get(i).isModule ? MODULE_H : SETTING_H;
-		}
-		int panelH = HEADER_H + 10 + contentH + FOOTER_H + 10;
-
-		// --- Panel: shadow, body, border ---
-		rrect(g, px + 5, py + 6, PANEL_W, panelH, 0x66000000);
-		rrect(g, px, py, PANEL_W, panelH, 0xFF12121B);
-		rrect(g, px + 1, py + 1, PANEL_W - 2, panelH - 2, 0xF70C0A13);
-		// Accent top edge with rounded caps
+		// --- Window chrome: shadow + GLASS body + accent edge ---
+		rrect(g, px + 5, py + 6, panelW, panelH, 0x66000000);
+		rrect(g, px, py, panelW, panelH, GuiTheme.glass(0xFF161620));
+		rrect(g, px + 1, py + 1, panelW - 2, panelH - 2, GuiTheme.glass(0xF50C0A13));
 		g.fill(px + 4, py, x1 - 4, py + 2, accent);
 		g.fill(px + 2, py + 1, px + 4, py + 2, accent);
 		g.fill(px + 1, py + 2, px + 2, py + 2, accent);
 		g.fill(x1 - 4, py + 1, x1 - 2, py + 2, accent);
 		g.fill(x1 - 2, py + 2, x1 - 1, py + 2, accent);
+		// Glass shine: a faint diagonal light band across the top-left of the window
+		for (int i = 0; i < panelW / 3 && i < 40; i++) {
+			int sy = py + 3 + i;
+			if (sy > py + panelH / 3) break;
+			g.fill(px + 3 + i * 2, sy, px + 4 + i * 2, sy + 1, 0x10FFFFFF);
+		}
 		// Divider between sidebar and content
 		g.fill(x0, py + 2, x0 + 1, py + panelH - 2, 0x38FFFFFF);
 
-		// --- Header: bold animated title (double-layer) + version ---
+		// --- Title bar: bold animated title + version + close ---
 		String title = GuiTheme.clientName;
 		int tx = x0 + 10;
 		for (int i = 0; i < title.length(); i++) {
@@ -249,13 +254,12 @@ public class ClickGuiScreen extends Screen {
 			tx += this.font.width(ch);
 		}
 		g.drawString(this.font, "v" + GuiTheme.version, tx + 5, py + 14, 0xFF8A8A96);
-		// Close button (round-ish, red hover tint)
-		boolean closeHover = in(mouseX, mouseY, x1 - 24, py + 6, 18, HEADER_H - 12);
-		rrect(g, x1 - 26, py + 8, 20, HEADER_H - 16, closeHover ? 0xFF441B1B : 0xFF1E1620);
+		boolean closeHover = in(mouseX, mouseY, x1 - 26, py + 8, 20, HEADER_H - 16);
+		rrect(g, x1 - 26, py + 8, 20, HEADER_H - 16, closeHover ? 0xFF441B1B : GuiTheme.glass(0xFF1E1620));
 		g.drawString(this.font, "x", x1 - 19, py + 14, closeHover ? 0xFFFF7777 : 0xFFAA6666);
 
-		// --- Gradient-lit strip under the header (slow hue shift) ---
-		int stripW = PANEL_W - SIDEBAR_W;
+		// --- Gradient-lit strip under the header ---
+		int stripW = panelW - SIDEBAR_W;
 		for (int i = 0; i < stripW - 12; i++) {
 			g.fill(x0 + 6 + i, py + HEADER_H - 5, x0 + 7 + i, py + HEADER_H - 2, hue(time, i));
 		}
@@ -279,7 +283,6 @@ public class ClickGuiScreen extends Screen {
 			if (active) {
 				g.fill(px + 7, cy + 3, px + 9, cy + CAT_H - 6, accent);
 			}
-			// Glyph icon (hand-drawn per category)
 			int gx = px + 14;
 			int gy = cy + 8;
 			int gc = active ? accent : 0xFF6E6E7A;
@@ -315,9 +318,9 @@ public class ClickGuiScreen extends Screen {
 			Row r = rows.get(i);
 			int y = rowYs[i];
 			int h = r.isModule ? MODULE_H : SETTING_H;
-			boolean hovered = in(mouseX, mouseY, x0 + 3, y, PANEL_W - SIDEBAR_W - 6, h - 2);
+			boolean hovered = in(mouseX, mouseY, x0 + 3, y, panelW - SIDEBAR_W - 6, h - 2);
 			if (hovered) {
-				rrect(g, x0 + 5, y - 1, PANEL_W - SIDEBAR_W - 10, h, 0x1EFFFFFF);
+				rrect(g, x0 + 5, y - 1, panelW - SIDEBAR_W - 10, h, 0x1EFFFFFF);
 				g.fill(x0 + 6, y + 3, x0 + 8, y + h - 4, accent);
 			}
 			if (r.isModule) {
@@ -328,7 +331,11 @@ public class ClickGuiScreen extends Screen {
 		}
 
 		// --- Footer: hint + paging ---
-		int footY = py + HEADER_H + 10 + contentH + 5;
+		int contentH = 0;
+		for (int i = pageStart; i < visibleEnd; i++) {
+			contentH += rows.get(i).isModule ? MODULE_H : SETTING_H;
+		}
+		int footY = py + panelH - FOOTER_H - 8;
 		g.drawString(this.font, "tap row = toggle   + = settings", x0 + 8, footY, 0xFF6E6E76);
 		if (pageStart > 0) {
 			boolean hovL = in(mouseX, mouseY, x1 - 48, footY - 2, 24, FOOTER_H + 2);
@@ -338,10 +345,19 @@ public class ClickGuiScreen extends Screen {
 			boolean hovR = in(mouseX, mouseY, x1 - 26, footY - 2, 24, FOOTER_H + 2);
 			g.drawString(this.font, ">", x1 - 22, footY, hovR ? 0xFFFFFFFF : accent);
 		}
+
+		// --- Resize grip (bottom-right corner, OS-style diagonal lines) ---
+		int gpx = x1 - GRIP_SIZE - 2;
+		int gpy = py + panelH - GRIP_SIZE - 2;
+		boolean gripHover = in(mouseX, mouseY, gpx - 4, gpy - 4, GRIP_SIZE + 8, GRIP_SIZE + 8);
+		int gc = gripHover || resizing ? accent : 0xFF5A5A66;
+		for (int i = 2; i < GRIP_SIZE - 1; i += 3) {
+			g.fill(gpx + i, gpy + GRIP_SIZE - 2, gpx + i + 1, gpy + GRIP_SIZE - 1, gc);
+			g.fill(gpx + i + 3, gpy + GRIP_SIZE - 5, gpx + i + 4, gpy + GRIP_SIZE - 4, gc);
+		}
 	}
 
 	private void drawModuleRow(GuiGraphics g, Module m, int x0, int x1, int y, long time, boolean hovered) {
-		// Cosmetic modules get an "edit" tag to hint at the 3D editor
 		boolean hasEditor = m.getName().equals("Cosmetics");
 		g.drawString(this.font, m.getName(), x0 + 12, y + 11,
 				m.isEnabled() ? 0xFFFFFFFF : 0xFFAAAAB4);
@@ -356,7 +372,6 @@ public class ClickGuiScreen extends Screen {
 	}
 
 	private void drawSettingRow(GuiGraphics g, Row r, int x0, int x1, int y, long time) {
-		// Slide-in animation when the module expands
 		String key = r.module.getName();
 		float target = expanded.contains(r.module) ? 1f : 0f;
 		float a = expandAnim.getOrDefault(key, target);
@@ -412,7 +427,6 @@ public class ClickGuiScreen extends Screen {
 		int knob = SWITCH_H - 6;
 		int kx = x + 3 + (int) (f * (SWITCH_W - knob - 6));
 		rrect(g, kx, y + 3, knob + 1, knob + 1, 0xFFFFFFFF);
-		// Tiny sparkle dot on the knob while ON
 		if (f > 0.9f) {
 			g.fill(kx + 2, y + 5, kx + 3, y + 6, track);
 		}
@@ -420,13 +434,23 @@ public class ClickGuiScreen extends Screen {
 
 	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-		double mx = event.x();
-		double my = event.y();
+		int mx = (int) event.x();
+		int my = (int) event.y();
 		layout();
-		int px = (int) panelX;
-		int py = (int) panelY;
+		int px = panelX;
+		int py = panelY;
+		int x1 = px + panelW;
 		int x0 = px + SIDEBAR_W;
-		int x1 = px + PANEL_W;
+
+		// Resize grip (corner) - checked BEFORE everything else
+		int gpx = x1 - GRIP_SIZE - 2;
+		int gpy = py + panelH - GRIP_SIZE - 2;
+		if (in(mx, my, gpx - 4, gpy - 4, GRIP_SIZE + 8, GRIP_SIZE + 8)) {
+			resizing = true;
+			resizeOX = mx - panelW;
+			resizeOY = my - panelH;
+			return true;
+		}
 
 		// Close button
 		if (in(mx, my, x1 - 26, py + 8, 20, HEADER_H - 16)) {
@@ -434,8 +458,8 @@ public class ClickGuiScreen extends Screen {
 			return true;
 		}
 
-		// Header drag
-		if (in(mx, my, x0, py, PANEL_W - SIDEBAR_W, HEADER_H)) {
+		// Title bar drag
+		if (in(mx, my, px, py, panelW, HEADER_H)) {
 			dragging = true;
 			dragOX = mx - panelX;
 			dragOY = my - panelY;
@@ -460,11 +484,10 @@ public class ClickGuiScreen extends Screen {
 			Row r = rows.get(i);
 			int y = rowYs[i];
 			int h = r.isModule ? MODULE_H : SETTING_H;
-			if (!in(mx, my, x0, y, PANEL_W - SIDEBAR_W, h - 2)) {
+			if (!in(mx, my, x0, y, panelW - SIDEBAR_W, h - 2)) {
 				continue;
 			}
 			if (r.isModule) {
-				// Expand zone (right 22px) - Cosmetics has no expand, it has the 3D editor
 				if (!r.module.getName().equals("Cosmetics") && in(mx, my, x1 - 22, y, 22, h - 2)) {
 					if (expanded.contains(r.module)) {
 						expanded.remove(r.module);
@@ -474,7 +497,6 @@ public class ClickGuiScreen extends Screen {
 					rebuildRows();
 					return true;
 				}
-				// Cosmetics: open the 3D player-preview editor
 				if (r.module.getName().equals("Cosmetics")) {
 					if (this.minecraft != null) {
 						this.minecraft.setScreen(new CosmeticsScreen());
@@ -499,7 +521,7 @@ public class ClickGuiScreen extends Screen {
 					syncIfGuiEditor(r.module);
 					return true;
 				} else if (s instanceof SpyderSettings.RangeSetting rng) {
-					if (mx < x0 + (PANEL_W - SIDEBAR_W) / 2.0) {
+					if (mx < x0 + (panelW - SIDEBAR_W) / 2.0) {
 						rng.decrement();
 					} else {
 						rng.increment();
@@ -515,7 +537,7 @@ public class ClickGuiScreen extends Screen {
 		for (int i = pageStart; i < visibleEnd; i++) {
 			contentH += rows.get(i).isModule ? MODULE_H : SETTING_H;
 		}
-		int footY = py + HEADER_H + 10 + contentH + 5;
+		int footY = py + panelH - FOOTER_H - 8;
 		if (pageStart > 0 && in(mx, my, x1 - 48, footY - 2, 24, FOOTER_H + 2)) {
 			int pageSize = Math.max(1, visibleEnd - pageStart);
 			pageStart = Math.max(0, pageStart - pageSize);
@@ -539,10 +561,19 @@ public class ClickGuiScreen extends Screen {
 
 	@Override
 	public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+		int mx = (int) event.x();
+		int my = (int) event.y();
+		if (resizing) {
+			panelW = Math.max(MIN_W, (int) Math.min(this.width - panelX, mx - resizeOX));
+			panelH = Math.max(MIN_H, (int) Math.min(this.height - panelY, my - resizeOY));
+			clampWindow();
+			layout();
+			return true;
+		}
 		if (dragging) {
-			panelX = event.x() - dragOX;
-			panelY = event.y() - dragOY;
-			clampPanel();
+			panelX = mx - dragOX;
+			panelY = my - dragOY;
+			clampWindow();
 			layout();
 			return true;
 		}
@@ -552,6 +583,7 @@ public class ClickGuiScreen extends Screen {
 	@Override
 	public boolean mouseReleased(MouseButtonEvent event) {
 		dragging = false;
+		resizing = false;
 		return super.mouseReleased(event);
 	}
 
@@ -578,7 +610,6 @@ public class ClickGuiScreen extends Screen {
 	private void drawCosmic(GuiGraphics g) {
 		g.fill(0, 0, this.width, this.height, 0xFF050510);
 		long time = System.currentTimeMillis();
-		// Nebula bands drifting slowly down the screen
 		for (int band = 0; band < 3; band++) {
 			int bandH = this.height / 5;
 			float phase = ((time % 42000L) / 42000.0F) + band * 0.33F;
