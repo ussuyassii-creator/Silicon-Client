@@ -1,7 +1,7 @@
 package dev.spyder.module;
 
 import dev.spyder.core.SpyderSettings.CycleSetting;
-import dev.spyder core.SpyderSettings.ToggleSetting;
+import dev.spyder.core.SpyderSettings.ToggleSetting;
 import dev.spyder.core.SpyderSettings.RangeSetting;
 
 /**
