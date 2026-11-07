@@ -2,16 +2,54 @@ package dev.spyder.module;
 
 /**
  * Swing - custom hand swing animations.
- * Milestone 2: toggleable from the ClickGUI so the framework is proven.
- * Milestone 3 will add the actual animations.
+ * 12 styles replace the vanilla chop when enabled.
  */
 public class SwingModule extends Module {
+	public enum Style {
+		CHOP("Chop"),
+		FORTNITE("Fortnite"),
+		SPIN_SLASH("Spin Slash"),
+		HELIX("Helix"),
+		WAVE("Wave"),
+		HELICOPTER("Helicopter"),
+		ONE_TWO("One-Two"),
+		PUNCH_OUT("Punch Out"),
+		HELIX_SLASH("Helix Slash"),
+		WAVE_SLASH("Wave Slash"),
+		REVERSE("Reverse"),
+		SMOOTH("Smooth");
+
+		private final String label;
+
+		Style(String label) {
+			this.label = label;
+		}
+
+		public String getLabel() {
+			return label;
+		}
+
+		public Style next() {
+			Style[] values = values();
+			return values[(this.ordinal() + 1) % values.length];
+		}
+	}
+
+	private Style style = Style.FORTNITE;
+
 	public SwingModule() {
 		super("Swing", "Custom hand swing animations");
 	}
 
-	@Override
-	protected void onToggle() {
-		// Real animations land in Milestone 3.
+	public Style getStyle() {
+		return style;
+	}
+
+	public void setStyle(Style style) {
+		this.style = style;
+	}
+
+	public void cycleStyle() {
+		style = style.next();
 	}
 }
