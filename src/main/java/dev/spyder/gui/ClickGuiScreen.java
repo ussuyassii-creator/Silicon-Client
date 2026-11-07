@@ -30,7 +30,6 @@ import java.util.Set;
  * - Settings rows slide in when a module expands
  * - Nebula bands + twinkling drifting stars background
  * - Sidebar with hand-drawn glyph icons + active category glow
- * - Cosmetics module opens the 3D player-preview editor
  *
  * ONLY uses API calls proven in green builds: fill + int drawString.
  * Built for the 1.21.11 input API (MouseButtonEvent / KeyEvent).
@@ -465,13 +464,6 @@ public class ClickGuiScreen extends Screen {
 						expanded.add(r.module);
 					}
 					rebuildRows();
-					return true;
-				}
-				// Cosmetics module: open the 3D preview editor
-				if (r.module.getName().equals("Cosmetics")) {
-					if (this.minecraft != null) {
-						this.minecraft.setScreen(new CosmeticsScreen());
-					}
 					return true;
 				}
 				r.module.toggle();
