@@ -1,9 +1,12 @@
 {
-	"required": false,
+	"required": true,
 	"package": "dev.spyder.mixin",
 	"compatibilityLevel": "JAVA_21",
-	"mixins": [],
+	"minVersion": "0.8",
+	"client": [
+		"ItemInHandRendererMixin"
+	],
 	"injectors": {
-		"defaultRequire": 0
+		"defaultRequire": 1
 	}
 }
