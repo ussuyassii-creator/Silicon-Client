@@ -20,37 +20,43 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * ClickGUI v4 - Prestige-inspired, fully hand-drawn, zero vanilla widgets.
- * - Chamfered (rounded) panels with drop shadow
- * - Row hover highlights with accent edge
- * - Glowing sliding switches (bigger, rounded knob)
- * - Nebula bands in the cosmic background
- * - Scaled bold animated title
- * - Interaction identical to v3 (proven 1.21.11 event API input handling).
+ * ClickGUI v5 "Premium" - smooth, clean, rich, fully animated.
+ * Every pixel hand-drawn; zero vanilla widgets.
+ * - Rounded panels with soft drop shadow
+ * - Bold animated title (double-layer draw, no pose scaling)
+ * - Gradient-lit header strip that slowly shifts hue
+ * - Row hover highlight with accent edge bar
+ * - Glowing sliding switches that animate every toggle
+ * - Settings rows slide in when a module expands
+ * - Nebula bands + twinkling drifting stars background
+ * - Sidebar with hand-drawn glyph icons + active category glow
+ *
+ * ONLY uses API calls proven in green builds: fill + int drawString.
+ * Built for the 1.21.11 input API (MouseButtonEvent / KeyEvent).
  */
 public class ClickGuiScreen extends Screen {
-	private static final int SIDEBAR_W = 84;
-	private static final int PANEL_W = 286;
-	private static final int HEADER_H = 40;
+	private static final int SIDEBAR_W = 86;
+	private static final int PANEL_W = 292;
+	private static final int HEADER_H = 42;
 	private static final int MODULE_H = 30;
 	private static final int SETTING_H = 24;
 	private static final int FOOTER_H = 18;
-	private static final int CAT_H = 24;
-	private static final int SWITCH_W = 30;
-	private static final int SWITCH_H = 15;
+	private static final int CAT_H = 26;
+	private static final int SWITCH_W = 32;
+	private static final int SWITCH_H = 16;
 
 	private static final String[] CATS = {"VISUALS", "HUD", "CLIENT"};
 
 	// Starfield (allocated once, reused forever)
-	private static final int STAR_COUNT = 90;
+	private static final int STAR_COUNT = 110;
 	private static final float[] starX = new float[STAR_COUNT];
 	private static final float[] starY = new float[STAR_COUNT];
 	private static final float[] starSp = new float[STAR_COUNT];
 	private static final float[] starTw = new float[STAR_COUNT];
 	private static boolean starsInit = false;
 
-	private double panelX = 24;
-	private double panelY = 24;
+	private double panelX = 40;
+	private double panelY = 32;
 	private boolean dragging;
 	private double dragOX;
 	private double dragOY;
@@ -59,6 +65,8 @@ public class ClickGuiScreen extends Screen {
 
 	private final Set<Module> expanded = new HashSet<>();
 	private final Map<String, Float> switchAnim = new HashMap<>();
+	private final Map<String, Float> expandAnim = new HashMap<>();
+	private final float[] catAnim = new float[CATS.length];
 
 	private static final class Row {
 		final Module module;
@@ -93,7 +101,7 @@ public class ClickGuiScreen extends Screen {
 			for (int i = 0; i < STAR_COUNT; i++) {
 				starX[i] = (float) Math.random();
 				starY[i] = (float) Math.random();
-				starSp[i] = 0.00006f + (float) Math.random() * 0.00022f;
+				starSp[i] = 0.00006f + (float) Math.random() * 0.00020f;
 				starTw[i] = (float) Math.random() * 6.2831855f;
 			}
 			starsInit = true;
@@ -111,6 +119,16 @@ public class ClickGuiScreen extends Screen {
 			return "CLIENT";
 		}
 		return "VISUALS";
+	}
+
+	private static int countInCat(String cat) {
+		int c = 0;
+		for (Module m : ModuleManager.modules()) {
+			if (categoryOf(m).equals(cat)) {
+				c++;
+			}
+		}
+		return c;
 	}
 
 	private void rebuildRows() {
@@ -133,8 +151,8 @@ public class ClickGuiScreen extends Screen {
 	}
 
 	private void layout() {
-		int top = (int) panelY + HEADER_H + 8;
-		int avail = this.height - top - FOOTER_H - 12;
+		int top = (int) panelY + HEADER_H + 10;
+		int avail = this.height - top - FOOTER_H - 16;
 		if (avail < MODULE_H) {
 			avail = MODULE_H;
 		}
@@ -157,12 +175,28 @@ public class ClickGuiScreen extends Screen {
 		panelY = Math.max(0, Math.min(panelY, Math.max(0, this.height - HEADER_H - 60)));
 	}
 
-	/** Chamfered ("rounded") rectangle via stepped fills - radius ~3. */
+	/** Rounded rectangle (radius ~4) via layered fills. */
 	private void rrect(GuiGraphics g, int x, int y, int w, int h, int color) {
-		g.fill(x + 3, y, x + w - 3, y + h, color);
-		g.fill(x, y + 3, x + w, y + h - 3, color);
+		if (w < 8 || h < 8) {
+			g.fill(x, y, x + w, y + h, color);
+			return;
+		}
+		g.fill(x + 4, y, x + w - 4, y + h, color);
+		g.fill(x, y + 4, x + w, y + h - 4, color);
 		g.fill(x + 1, y + 1, x + w - 1, y + h - 1, color);
-		g.fill(x + 2, y + 2, x + w - 2, y + h - 2, color);
+		g.fill(x + 2, y + 1, x + w - 2, y + h - 1, color);
+		g.fill(x + 1, y + 2, x + w - 1, y + h - 2, color);
+		g.fill(x + 3, y + 1, x + w - 3, y + h - 1, color);
+	}
+
+	/** Soft outer glow: 3 fading rings around a rect. */
+	private void glow(GuiGraphics g, int x, int y, int w, int h, int rgb, float strength) {
+		int a1 = (int) (0x30 * strength);
+		int a2 = (int) (0x18 * strength);
+		int a3 = (int) (0x0C * strength);
+		g.fill(x - 6, y - 6, x + w + 6, y + h + 6, (a3 << 24) | rgb);
+		g.fill(x - 4, y - 4, x + w + 4, y + h + 4, (a2 << 24) | rgb);
+		g.fill(x - 2, y - 2, x + w + 2, y + h + 2, (a1 << 24) | rgb);
 	}
 
 	@Override
@@ -187,151 +221,194 @@ public class ClickGuiScreen extends Screen {
 		for (int i = pageStart; i < visibleEnd; i++) {
 			contentH += rows.get(i).isModule ? MODULE_H : SETTING_H;
 		}
-		int panelH = HEADER_H + 8 + contentH + FOOTER_H + 8;
+		int panelH = HEADER_H + 10 + contentH + FOOTER_H + 10;
 
-		// Drop shadow, then rounded panel body
-		rrect(g, px + 4, py + 5, PANEL_W, panelH, 0x55000000);
-		rrect(g, px, py, PANEL_W, panelH, 0xFF15151D);
-		rrect(g, px + 1, py + 1, PANEL_W - 2, panelH - 2, 0xF60D0B14);
-		// Accent top edge across rounded corners
-		g.fill(px + 3, py, x1 - 3, py + 2, accent);
-		g.fill(px + 2, py + 1, px + 3, py + 2, accent);
-		g.fill(x1 - 3, py + 1, x1 - 2, py + 2, accent);
+		// --- Panel: shadow, body, border ---
+		rrect(g, px + 5, py + 6, PANEL_W, panelH, 0x66000000);
+		rrect(g, px, py, PANEL_W, panelH, 0xFF12121B);
+		rrect(g, px + 1, py + 1, PANEL_W - 2, panelH - 2, 0xF70C0A13);
+		// Accent top edge with rounded caps
+		g.fill(px + 4, py, x1 - 4, py + 2, accent);
+		g.fill(px + 2, py + 1, px + 4, py + 2, accent);
+		g.fill(px + 1, py + 2, px + 2, py + 2, accent);
+		g.fill(x1 - 4, py + 1, x1 - 2, py + 2, accent);
+		g.fill(x1 - 2, py + 2, x1 - 1, py + 2, accent);
+		// Divider between sidebar and content
+		g.fill(x0, py + 2, x0 + 1, py + panelH - 2, 0x38FFFFFF);
 
-		// Scaled bold animated title with drop shadow + version
-		float ts = 1.35F;
-		g.pose().pushPose();
-		g.pose().scale(ts, ts, 1.0F);
+		// --- Header: bold animated title (double-layer) + version ---
 		String title = GuiTheme.clientName;
-		float tx = (x0 + 10) / ts;
+		int tx = x0 + 10;
 		for (int i = 0; i < title.length(); i++) {
 			String ch = String.valueOf(title.charAt(i));
-			g.drawString(this.font, ch, tx + 0.5F, (py + 9) / ts + 0.5F, 0x66000000);
-			g.drawString(this.font, ch, tx, (py + 9) / ts, hue(time, i * 120));
+			int c = hue(time, i * 120);
+			g.drawString(this.font, ch, tx + 1, py + 12, 0x66000000);
+			g.drawString(this.font, ch, tx, py + 11, c);
+			g.drawString(this.font, ch, tx, py + 12, c);
 			tx += this.font.width(ch);
 		}
-		g.pose().popPose();
-		int titleEndX = (int) (tx * ts);
-		g.drawString(this.font, "v" + GuiTheme.version, titleEndX + 4, py + 14, 0xFF8A8A96);
-		g.drawString(this.font, "x", x1 - 15, py + 11, 0xFF995555);
-		// Animated rainbow strip under header
+		g.drawString(this.font, "v" + GuiTheme.version, tx + 5, py + 14, 0xFF8A8A96);
+		// Close button (round-ish, red hover tint)
+		boolean closeHover = in(mouseX, mouseY, x1 - 24, py + 6, 18, HEADER_H - 12);
+		rrect(g, x1 - 26, py + 8, 20, HEADER_H - 16, closeHover ? 0xFF441B1B : 0xFF1E1620);
+		g.drawString(this.font, "x", x1 - 19, py + 14, closeHover ? 0xFFFF7777 : 0xFFAA6666);
+
+		// --- Gradient-lit strip under the header (slow hue shift) ---
 		int stripW = PANEL_W - SIDEBAR_W;
-		for (int i = 0; i < stripW - 10; i++) {
-			g.fill(x0 + 5 + i, py + HEADER_H - 3, x0 + 6 + i, py + HEADER_H, hue(time, i));
+		for (int i = 0; i < stripW - 12; i++) {
+			g.fill(x0 + 6 + i, py + HEADER_H - 5, x0 + 7 + i, py + HEADER_H - 2, hue(time, i));
 		}
-		// Divider between sidebar and content
-		g.fill(x0, py + 2, x0 + 1, py + panelH - 2, 0x40FFFFFF);
 
-		// Sidebar categories with glyph icons
+		// --- Sidebar: glyph icons + labels + counts, active glow ---
 		for (int i = 0; i < CATS.length; i++) {
-			int cy = py + HEADER_H + 10 + i * CAT_H;
+			int cy = py + HEADER_H + 12 + i * CAT_H;
 			boolean active = i == activeCat;
+			float target = active ? 1f : 0f;
+			catAnim[i] += (target - catAnim[i]) * 0.25f;
+			if (Math.abs(target - catAnim[i]) < 0.02f) {
+				catAnim[i] = target;
+			}
+			if (catAnim[i] > 0.03f) {
+				glow(g, px + 6, cy - 1, SIDEBAR_W - 12, CAT_H - 2,
+						(GuiTheme.accentR << 16) | (GuiTheme.accentG << 8) | GuiTheme.accentB,
+						catAnim[i] * 0.8f);
+			}
+			rrect(g, px + 6, cy - 1, SIDEBAR_W - 12, CAT_H - 2,
+					active ? 0x2EFFFFFF : 0x10FFFFFF);
 			if (active) {
-				rrect(g, px + 5, cy, SIDEBAR_W - 10, CAT_H - 2, 0x28FFFFFF);
-				g.fill(px + 6, cy + 4, px + 8, cy + CAT_H - 6, accent);
+				g.fill(px + 7, cy + 3, px + 9, cy + CAT_H - 6, accent);
 			}
-			int gx = px + 12;
-			int gy = cy + (CAT_H - 2) / 2 - 2;
-			int gc = active ? accent : 0xFF70707C;
-			if (i == 0) {
-				g.fill(gx, gy, gx + 4, gy + 4, gc);
-			} else if (i == 1) {
-				g.fill(gx, gy, gx + 4, gy + 1, gc);
-				g.fill(gx, gy + 3, gx + 4, gy + 4, gc);
-				g.fill(gx, gy, gx + 1, gy + 4, gc);
-				g.fill(gx + 3, gy, gx + 4, gy + 4, gc);
-			} else {
-				g.fill(gx + 1, gy, gx + 3, gy + 1, gc);
-				g.fill(gx, gy + 1, gx + 4, gy + 3, gc);
-				g.fill(gx + 1, gy + 3, gx + 3, gy + 4, gc);
+			// Glyph icon (hand-drawn per category)
+			int gx = px + 14;
+			int gy = cy + 8;
+			int gc = active ? accent : 0xFF6E6E7A;
+			if (i == 0) { // VISUALS: eye-ish diamond
+				g.fill(gx + 2, gy, gx + 4, gy + 1, gc);
+				g.fill(gx, gy + 1, gx + 2, gy + 2, gc);
+				g.fill(gx + 4, gy + 1, gx + 6, gy + 2, gc);
+				g.fill(gx + 2, gy + 2, gx + 4, gy + 3, gc);
+				g.fill(gx, gy + 3, gx + 2, gy + 4, gc);
+				g.fill(gx + 4, gy + 3, gx + 6, gy + 4, gc);
+				g.fill(gx + 2, gy + 4, gx + 4, gy + 5, gc);
+			} else if (i == 1) { // HUD: screen outline
+				g.fill(gx, gy, gx + 6, gy + 1, gc);
+				g.fill(gx, gy + 4, gx + 6, gy + 5, gc);
+				g.fill(gx, gy, gx + 1, gy + 5, gc);
+				g.fill(gx + 5, gy, gx + 6, gy + 5, gc);
+				g.fill(gx + 2, gy + 2, gx + 4, gy + 3, gc);
+			} else { // CLIENT: gear-ish block
+				g.fill(gx + 1, gy, gx + 4, gy + 1, gc);
+				g.fill(gx, gy + 1, gx + 5, gy + 4, gc);
+				g.fill(gx + 1, gy + 4, gx + 4, gy + 5, gc);
+				g.fill(gx + 2, gy + 2, gx + 3, gy + 3, 0xFF0C0A13);
 			}
-			g.drawString(this.font, CATS[i], px + 22, cy + 8,
+			g.drawString(this.font, CATS[i], px + 26, cy + 8,
 					active ? 0xFFFFFFFF : 0xFF8E8E96);
+			String cnt = String.valueOf(countInCat(CATS[i]));
+			g.drawString(this.font, cnt, px + SIDEBAR_W - this.font.width(cnt) - 8, cy + 8,
+					active ? accent : 0xFF55555F);
 		}
 
-		// Rows with hover highlight
+		// --- Rows: hover highlight + accent bar ---
 		for (int i = pageStart; i < visibleEnd; i++) {
 			Row r = rows.get(i);
 			int y = rowYs[i];
 			int h = r.isModule ? MODULE_H : SETTING_H;
-			boolean hovered = in(mouseX, mouseY, x0 + 2, y, PANEL_W - SIDEBAR_W - 4, h - 2);
+			boolean hovered = in(mouseX, mouseY, x0 + 3, y, PANEL_W - SIDEBAR_W - 6, h - 2);
 			if (hovered) {
-				rrect(g, x0 + 4, y, PANEL_W - SIDEBAR_W - 8, h - 2, 0x1CFFFFFF);
-				g.fill(x0 + 5, y + 3, x0 + 7, y + h - 5, accent);
+				rrect(g, x0 + 5, y - 1, PANEL_W - SIDEBAR_W - 10, h, 0x1EFFFFFF);
+				g.fill(x0 + 6, y + 3, x0 + 8, y + h - 4, accent);
 			}
 			if (r.isModule) {
-				drawModuleRow(g, r.module, x0, x1, y, time);
+				drawModuleRow(g, r.module, x0, x1, y, time, hovered);
 			} else {
 				drawSettingRow(g, r, x0, x1, y, time);
 			}
 		}
 
-		// Footer
-		int footY = py + HEADER_H + 8 + contentH + 4;
+		// --- Footer: hint + paging ---
+		int footY = py + HEADER_H + 10 + contentH + 5;
 		g.drawString(this.font, "tap row = toggle   + = settings", x0 + 8, footY, 0xFF6E6E76);
 		if (pageStart > 0) {
-			g.drawString(this.font, "<", x1 - 44, footY, accent);
+			boolean hovL = in(mouseX, mouseY, x1 - 48, footY - 2, 24, FOOTER_H + 2);
+			g.drawString(this.font, "<", x1 - 44, footY, hovL ? 0xFFFFFFFF : accent);
 		}
 		if (visibleEnd < rows.size()) {
-			g.drawString(this.font, ">", x1 - 20, footY, accent);
+			boolean hovR = in(mouseX, mouseY, x1 - 26, footY - 2, 24, FOOTER_H + 2);
+			g.drawString(this.font, ">", x1 - 22, footY, hovR ? 0xFFFFFFFF : accent);
 		}
-		String wm = GuiTheme.clientName.toLowerCase() + " v" + GuiTheme.version;
-		g.drawString(this.font, wm, x0 + 2 + this.font.width("tap row = toggle") * 0 / 1 + 8 + this.font.width("tap row = toggle   + = settings") + 8, footY, 0xFF4A4A55);
 	}
 
-	private void drawModuleRow(GuiGraphics g, Module m, int x0, int x1, int y, long time) {
-		g.drawString(this.font, m.getName(), x0 + 10, y + 11,
+	private void drawModuleRow(GuiGraphics g, Module m, int x0, int x1, int y, long time, boolean hovered) {
+		g.drawString(this.font, m.getName(), x0 + 12, y + 11,
 				m.isEnabled() ? 0xFFFFFFFF : 0xFFAAAAB4);
-		drawSwitch(g, x1 - 44, y + 7, m.isEnabled(), m.getName());
+		drawSwitch(g, x1 - 48, y + 7, m.isEnabled(), m.getName());
 		boolean open = expanded.contains(m);
-		g.drawString(this.font, open ? "-" : "+", x1 - 15, y + 11, 0xFFC8C8D0);
+		g.drawString(this.font, open ? "-" : "+", x1 - 17, y + 11,
+				hovered ? 0xFFFFFFFF : 0xFFC8C8D0);
 	}
 
 	private void drawSettingRow(GuiGraphics g, Row r, int x0, int x1, int y, long time) {
-		int indent = x0 + 16;
+		// Slide-in animation when the module expands
+		String key = r.module.getName();
+		float target = expanded.contains(r.module) ? 1f : 0f;
+		float a = expandAnim.getOrDefault(key, target);
+		a += (target - a) * 0.30f;
+		if (Math.abs(target - a) < 0.02f) {
+			a = target;
+		}
+		expandAnim.put(key, a);
+		int slide = (int) ((1.0f - a) * 14.0f);
+
+		int indent = x0 + 16 + slide;
 		SpyderSettings.Setting s = r.setting;
 		if (s instanceof SpyderSettings.CycleSetting cyc) {
 			g.drawString(this.font, cyc.display(), indent, y + 8, 0xFFB0B0BC);
 			String chip = "< " + cyc.value() + " >";
 			int chipW = this.font.width(chip);
-			int chipX = x1 - 12 - chipW;
-			rrect(g, chipX - 7, y + 4, chipW + 14, SETTING_H - 8, 0x24FFFFFF);
-			g.drawString(this.font, chip, chipX, y + 8, hue(time, y * 16));
+			int chipX = x1 - 14 - chipW;
+			rrect(g, chipX - 8, y + 3, chipW + 16, SETTING_H - 6, 0x26FFFFFF);
+			g.drawString(this.font, "<", chipX, y + 8, 0xFF8E8E9A);
+			g.drawString(this.font, cyc.value(), chipX + this.font.width("< "), y + 8, hue(time, y * 16));
+			g.drawString(this.font, ">", chipX + chipW - this.font.width(">"), y + 8, 0xFF8E8E9A);
 		} else if (s instanceof SpyderSettings.ToggleSetting tog) {
 			g.drawString(this.font, tog.display(), indent, y + 8, 0xFFB0B0BC);
-			drawSwitch(g, x1 - 44, y + 4, tog.value(), tog.name());
+			drawSwitch(g, x1 - 48, y + 4, tog.value(), key + "." + tog.name());
 		} else if (s instanceof SpyderSettings.RangeSetting rng) {
 			g.drawString(this.font, rng.display(), indent, y + 8, 0xFFB0B0BC);
 			String val = String.format("%.2f", rng.value());
-			rrect(g, x1 - 62, y + 4, 12, SETTING_H - 12, 0x24FFFFFF);
-			g.drawString(this.font, "-", x1 - 58, y + 8, 0xFFD8D8E0);
-			int valX = x1 - 46;
+			rrect(g, x1 - 66, y + 3, 14, SETTING_H - 10, 0x26FFFFFF);
+			g.drawString(this.font, "-", x1 - 61, y + 8, 0xFFD8D8E0);
+			int valX = x1 - 50;
 			g.drawString(this.font, val, valX, y + 8, hue(time, y * 16));
-			int plusX = valX + this.font.width(val) + 6;
-			rrect(g, plusX - 2, y + 4, 12, SETTING_H - 12, 0x24FFFFFF);
+			int plusX = valX + this.font.width(val) + 8;
+			rrect(g, plusX - 3, y + 3, 14, SETTING_H - 10, 0x26FFFFFF);
 			g.drawString(this.font, "+", plusX + 2, y + 8, 0xFFD8D8E0);
 		}
 	}
 
-	/** Animated glowing sliding switch with rounded knob. */
+	/** Glowing animated sliding switch - premium look, zero allocations. */
 	private void drawSwitch(GuiGraphics g, int x, int y, boolean on, String key) {
 		float f = switchAnim.getOrDefault(key, on ? 1f : 0f);
 		float target = on ? 1f : 0f;
-		f += (target - f) * 0.35f;
+		f += (target - f) * 0.30f;
 		if (Math.abs(target - f) < 0.02f) {
 			f = target;
 		}
 		switchAnim.put(key, f);
+		int rgb = (GuiTheme.accentR << 16) | (GuiTheme.accentG << 8) | GuiTheme.accentB;
 		if (f > 0.05f) {
-			int glowA = (int) (0x40 * f);
-			rrect(g, x - 2, y - 2, SWITCH_W + 4, SWITCH_H + 4,
-					(glowA << 24) | (GuiTheme.accentR << 16) | (GuiTheme.accentG << 8) | GuiTheme.accentB);
+			glow(g, x, y, SWITCH_W, SWITCH_H, rgb, f);
 		}
 		int track = f > 0.5f ? GuiTheme.accent() : 0xFF3A3038;
 		rrect(g, x, y, SWITCH_W, SWITCH_H, track);
-		int knob = SWITCH_H - 5;
+		int knob = SWITCH_H - 6;
 		int kx = x + 3 + (int) (f * (SWITCH_W - knob - 6));
-		rrect(g, kx, y + 2, knob + 1, knob + 1, 0xFFFFFFFF);
+		rrect(g, kx, y + 3, knob + 1, knob + 1, 0xFFFFFFFF);
+		// Tiny sparkle dot on the knob while ON
+		if (f > 0.9f) {
+			g.fill(kx + 2, y + 5, kx + 3, y + 6, track);
+		}
 	}
 
 	@Override
@@ -344,11 +421,13 @@ public class ClickGuiScreen extends Screen {
 		int x0 = px + SIDEBAR_W;
 		int x1 = px + PANEL_W;
 
-		if (in(mx, my, x1 - 24, py + 4, 22, HEADER_H - 8)) {
+		// Close button
+		if (in(mx, my, x1 - 26, py + 8, 20, HEADER_H - 16)) {
 			onClose();
 			return true;
 		}
 
+		// Header drag
 		if (in(mx, my, x0, py, PANEL_W - SIDEBAR_W, HEADER_H)) {
 			dragging = true;
 			dragOX = mx - panelX;
@@ -356,9 +435,10 @@ public class ClickGuiScreen extends Screen {
 			return true;
 		}
 
+		// Sidebar categories
 		for (int i = 0; i < CATS.length; i++) {
-			int cy = py + HEADER_H + 10 + i * CAT_H;
-			if (in(mx, my, px + 5, cy, SIDEBAR_W - 10, CAT_H - 2)) {
+			int cy = py + HEADER_H + 12 + i * CAT_H;
+			if (in(mx, my, px + 6, cy - 1, SIDEBAR_W - 12, CAT_H - 2)) {
 				if (activeCat != i) {
 					activeCat = i;
 					pageStart = 0;
@@ -368,6 +448,7 @@ public class ClickGuiScreen extends Screen {
 			}
 		}
 
+		// Rows
 		for (int i = pageStart; i < visibleEnd; i++) {
 			Row r = rows.get(i);
 			int y = rowYs[i];
@@ -376,7 +457,7 @@ public class ClickGuiScreen extends Screen {
 				continue;
 			}
 			if (r.isModule) {
-				if (in(mx, my, x1 - 18, y, 18, h - 2)) {
+				if (in(mx, my, x1 - 22, y, 22, h - 2)) {
 					if (expanded.contains(r.module)) {
 						expanded.remove(r.module);
 					} else {
@@ -414,18 +495,19 @@ public class ClickGuiScreen extends Screen {
 			}
 		}
 
+		// Footer paging
 		int contentH = 0;
 		for (int i = pageStart; i < visibleEnd; i++) {
 			contentH += rows.get(i).isModule ? MODULE_H : SETTING_H;
 		}
-		int footY = py + HEADER_H + 8 + contentH + 4;
-		if (pageStart > 0 && in(mx, my, x1 - 46, footY - 2, 24, FOOTER_H + 2)) {
+		int footY = py + HEADER_H + 10 + contentH + 5;
+		if (pageStart > 0 && in(mx, my, x1 - 48, footY - 2, 24, FOOTER_H + 2)) {
 			int pageSize = Math.max(1, visibleEnd - pageStart);
 			pageStart = Math.max(0, pageStart - pageSize);
 			layout();
 			return true;
 		}
-		if (visibleEnd < rows.size() && in(mx, my, x1 - 24, footY - 2, 24, FOOTER_H + 2)) {
+		if (visibleEnd < rows.size() && in(mx, my, x1 - 26, footY - 2, 24, FOOTER_H + 2)) {
 			pageStart = visibleEnd;
 			layout();
 			return true;
@@ -481,12 +563,13 @@ public class ClickGuiScreen extends Screen {
 	private void drawCosmic(GuiGraphics g) {
 		g.fill(0, 0, this.width, this.height, 0xFF050510);
 		long time = System.currentTimeMillis();
+		// Nebula bands drifting slowly down the screen
 		for (int band = 0; band < 3; band++) {
 			int bandH = this.height / 5;
-			float phase = ((time % 30000L) / 30000.0F) + band * 0.33F;
+			float phase = ((time % 42000L) / 42000.0F) + band * 0.33F;
 			int by = (int) ((phase % 1.0F) * (this.height + bandH)) - bandH;
-			int hueCol = hue(time, band * 900);
-			int color = (hueCol & 0x00FFFFFF) | 0x14000000;
+			int hueCol = hue(time, band * 1200);
+			int color = (hueCol & 0x00FFFFFF) | 0x12000000;
 			g.fill(0, by, this.width, by + bandH, color);
 			g.fill(0, by + bandH / 3, this.width, by + bandH * 2 / 3, color);
 		}
