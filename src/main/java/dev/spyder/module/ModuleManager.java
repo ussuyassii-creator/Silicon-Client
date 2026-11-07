@@ -22,6 +22,7 @@ public final class ModuleManager {
 		register(new CosmeticsModule());
 		register(new GuiModule());
 		register(new HudModule());
+		register(new FpsBoostModule());
 	}
 
 	public static void register(Module module) {
