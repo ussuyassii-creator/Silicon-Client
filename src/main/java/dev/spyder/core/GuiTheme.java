@@ -2,8 +2,8 @@ package dev.spyder.core;
 
 /**
  * GUI theme engine. All colors + the animated cosmic background live here.
- * The GUI module mutates these values; the ClickGUI reads them every frame
- * straight from statics - no allocation, no lookups, no lag.
+ * The GUI module mutates these values; the ClickGUI and HUD read them every
+ * frame straight from statics - no allocation, no lookups, no lag.
  */
 public final class GuiTheme {
 	public enum Background {
@@ -16,6 +16,8 @@ public final class GuiTheme {
 	public static Background background = Background.COSMIC;
 	public static float cosmicIntensity = 1.0f;
 	public static boolean showStars = true;
+	public static String clientName = "SPYDER";
+	public static String version = "0.2.0";
 
 	private GuiTheme() {
 	}
