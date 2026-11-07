@@ -30,6 +30,7 @@ import java.util.Set;
  * - Settings rows slide in when a module expands
  * - Nebula bands + twinkling drifting stars background
  * - Sidebar with hand-drawn glyph icons + active category glow
+ * - Cosmetics module opens the 3D player-preview editor
  *
  * ONLY uses API calls proven in green builds: fill + int drawString.
  * Built for the 1.21.11 input API (MouseButtonEvent / KeyEvent).
@@ -340,12 +341,18 @@ public class ClickGuiScreen extends Screen {
 	}
 
 	private void drawModuleRow(GuiGraphics g, Module m, int x0, int x1, int y, long time, boolean hovered) {
+		// Cosmetic modules get an "edit" tag to hint at the 3D editor
+		boolean hasEditor = m.getName().equals("Cosmetics");
 		g.drawString(this.font, m.getName(), x0 + 12, y + 11,
 				m.isEnabled() ? 0xFFFFFFFF : 0xFFAAAAB4);
 		drawSwitch(g, x1 - 48, y + 7, m.isEnabled(), m.getName());
-		boolean open = expanded.contains(m);
-		g.drawString(this.font, open ? "-" : "+", x1 - 17, y + 11,
-				hovered ? 0xFFFFFFFF : 0xFFC8C8D0);
+		if (hasEditor) {
+			g.drawString(this.font, "3D", x1 - 17, y + 11, hovered ? 0xFFFFFFFF : GuiTheme.accent());
+		} else {
+			boolean open = expanded.contains(m);
+			g.drawString(this.font, open ? "-" : "+", x1 - 17, y + 11,
+					hovered ? 0xFFFFFFFF : 0xFFC8C8D0);
+		}
 	}
 
 	private void drawSettingRow(GuiGraphics g, Row r, int x0, int x1, int y, long time) {
@@ -457,13 +464,21 @@ public class ClickGuiScreen extends Screen {
 				continue;
 			}
 			if (r.isModule) {
-				if (in(mx, my, x1 - 22, y, 22, h - 2)) {
+				// Expand zone (right 22px) - Cosmetics has no expand, it has the 3D editor
+				if (!r.module.getName().equals("Cosmetics") && in(mx, my, x1 - 22, y, 22, h - 2)) {
 					if (expanded.contains(r.module)) {
 						expanded.remove(r.module);
 					} else {
 						expanded.add(r.module);
 					}
 					rebuildRows();
+					return true;
+				}
+				// Cosmetics: open the 3D player-preview editor
+				if (r.module.getName().equals("Cosmetics")) {
+					if (this.minecraft != null) {
+						this.minecraft.setScreen(new CosmeticsScreen());
+					}
 					return true;
 				}
 				r.module.toggle();
