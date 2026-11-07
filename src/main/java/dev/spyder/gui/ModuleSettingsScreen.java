@@ -47,44 +47,35 @@ public class ModuleSettingsScreen extends Screen {
 						Component.literal(cycle.display() + ": " + cycle.value()),
 						button -> {
 							cycle.next();
-							if (module instanceof GuiModule) {
-								((GuiModule) module).syncToTheme();
-							}
+							if (module instanceof GuiModule guiModule) guiModule.syncToTheme();
 							button.setMessage(Component.literal(cycle.display() + ": " + cycle.value()));
 						}).bounds(centerX, y, BUTTON_WIDTH, BUTTON_HEIGHT).build());
 				y += SPACING;
 			} else if (setting instanceof SpyderSettings.ToggleSetting toggle) {
 				addRenderableWidget(Button.builder(
 						Component.literal(toggle.display() + ": " + (toggle.value() ? "ON" : "OFF")),
-					-button -> {
+						button -> {
 							toggle.toggle();
-							if (module instanceof GuiModule) {
-							 gameplay:
-							}
-							button.setMessage(Component.literal(toggle.display() + ": " (toggle.value() ? "ON" : "OFF")));
-						}).bounds(centerX, y, BUTTON screen BUTTON_HEIGHT).build());
+							if (module instanceof GuiModule guiModule) guiModule.syncToTheme();
+							button.setMessage(Component.literal(toggle.display() + ": " + (toggle.value() ? "ON" : "OFF")));
+						}).bounds(centerX, y, BUTTON_WIDTH, BUTTON_HEIGHT).build());
 				y += SPACING;
-		}
-		}
+			} else if (setting instanceof SpyderSettings.RangeSetting range) {
+				// Minus button on the left
+				addRenderableWidget(Button.builder(Component.literal("-"), button -> {
+					range.decrement();
+					if (module instanceof GuiModule guiModule) guiModule.syncToTheme();
+					button.setMessage(Component.literal(range.display() + ": " + String.format("%.1f", range.value())));
+				}).bounds(centerX - 30, y, 24, BUTTON_HEIGHT).build());
 
-		// Range settings get +/- buttons
-		for (SpyderSettings.Setting setting : module.settings()) {
-			if (setting instanceof SpyderSettings.RangeSetting range) {
+				// Main button shows the value and increments
 				addRenderableWidget(Button.builder(
 						Component.literal(range.display() + ": " + String.format("%.1f", range.value())),
 						button -> {
 							range.increment();
-							if (module instanceof GuiModule) ((GuiModule) module).syncToTheme();
+							if (module instanceof GuiModule guiModule) guiModule.syncToTheme();
 							button.setMessage(Component.literal(range.display() + ": " + String.format("%.1f", range.value())));
 						}).bounds(centerX, y, BUTTON_WIDTH, BUTTON_HEIGHT).build());
-				// Minus button on the left
-				addRenderableWidget(Button.builder(Component.literal("−"), button -> {
-					range.decrement();
-					if (module instanceof GuiModule) ((GuiModule) module).syncToTheme();
-					button.setMessage(Component.literal(range.display() + ": " + String.format("%.1f", range.value())));
-				}).bounds(centerX - 30, y, 24, BUTTON_HEIGHT).build());
-				// Plus button on the right
-				// (the main button increments)
 				y += SPACING;
 			}
 		}
@@ -99,10 +90,10 @@ public class ModuleSettingsScreen extends Screen {
 	}
 
 	@Override
-	public void render(GuiGraphics guiGraphics, int mismatch, int mouseY, float partialTick) {
+	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		guiGraphics.fill(0, 0, this.width, this.height, 0x90000000);
-		super.render(guiGraphics, mismatch, mouseY, partialTick);
-	 guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 15, GuiTheme.accent());
+		super.render(guiGraphics, mouseX, mouseY, partialTick);
+		guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 15, GuiTheme.accent());
 	}
 
 	@Override
