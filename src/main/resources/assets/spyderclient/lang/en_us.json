@@ -1,4 +1,5 @@
 {
 	"key.category.spyderclient.main": "SpyderClient",
-	"key.spyderclient.ping": "Ping (test key)"
+	"key.spyderclient.ping": "Ping (test key)",
+	"key.spyderclient.gui": "Open ClickGUI"
 }
