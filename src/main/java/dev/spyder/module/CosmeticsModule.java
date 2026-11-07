@@ -2,7 +2,6 @@ package dev.spyder.module;
 
 import dev.spyder.core.SpyderSettings.CycleSetting;
 import dev.spyder.core.SpyderSettings.RangeSetting;
-import dev.spyder.core.SpyderSettings.ToggleSetting;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.particles.ParticleOptions;
@@ -118,7 +117,7 @@ public class CosmeticsModule extends Module {
 				case "Wind" -> ParticleTypes.CLOUD;
 				case "Void" -> ParticleTypes.PORTAL;
 				case "Galaxy" -> ParticleTypes.FIREWORK;
-				case "Blood" -> ParticleTypes.DUST;
+				case "Blood" -> ParticleTypes.DAMAGE_INDICATOR;
 				default -> null;
 			};
 			if (trail != null) {
@@ -148,7 +147,7 @@ public class CosmeticsModule extends Module {
 								0.0, 0.02, 0.0);
 					}
 				}
-				case "Blood drop" -> client.level.addParticle(ParticleTypes.DUST, fx, fy, fz, 0.0, -0.02, 0.0);
+				case "Blood drop" -> client.level.addParticle(ParticleTypes.DAMAGE_INDICATOR, fx, fy, fz, 0.0, -0.02, 0.0);
 				case "Water drop" -> client.level.addParticle(ParticleTypes.SPLASH, fx, fy, fz, 0.0, 0.0, 0.0);
 				case "Wind spin" -> {
 					for (int i = 0; i < 6; i++) {
