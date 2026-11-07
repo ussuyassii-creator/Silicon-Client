@@ -6,11 +6,13 @@ import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.util.Mth;
 
 /**
  * HUD - Prestige-style on-screen HUD: animated watermark, FPS,
  * coordinates, and WASD/mouse keystrokes.
+ *
+ * The watermark reads GuiTheme.clientName so changing the name in the
+ * GUI Editor rebrands the HUD instantly.
  *
  * Lag-free by design: all strings are built once per TICK in onTick()
  * (cached in fields), and the per-frame draw only renders cached text
@@ -65,20 +67,18 @@ public class HudModule extends Module {
 		int y = 6;
 
 		if (showWatermark.value()) {
-			// Animated "SPYDER" letters - each letter its own hue phase
-			int lw = 0;
-			String title = "SPYDER";
-			for (int i = 0; i < title.length(); i++) {
-				lw += mc.font.width(String.valueOf(title.charAt(i)));
-			}
-			g.fill(x - 3, y - 2, x + lw + mc.font.width("  0.2.0") + 3, y + 11, 0xA00B0810);
+			// Animated client-name letters - each letter its own hue phase
+			String title = GuiTheme.clientName;
+			String ver = "  " + GuiTheme.version;
+			int lw = mc.font.width(title);
+			g.fill(x - 3, y - 2, x + lw + mc.font.width(ver) + 3, y + 11, 0xA00B0810);
 			int cx = x;
 			for (int i = 0; i < title.length(); i++) {
 				String ch = String.valueOf(title.charAt(i));
 				g.drawString(mc.font, ch, cx, y, hue(time, i * 120));
 				cx += mc.font.width(ch);
 			}
-			g.drawString(mc.font, "  0.2.0", cx, y, 0xFF9A9A9A);
+			g.drawString(mc.font, ver, cx, y, 0xFF9A9A9A);
 			y += 13;
 		}
 
