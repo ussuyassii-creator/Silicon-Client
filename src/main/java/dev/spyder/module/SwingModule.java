@@ -1,55 +1,33 @@
 package dev.spyder.module;
 
+import dev.spyder.core.SpyderSettings.CycleSetting;
+import dev.spyder.core.SpyderSettings.ToggleSetting;
+import dev.spyder.core.SpyderSettings.RangeSetting;
+
 /**
- * Swing - custom hand swing animations.
- * 12 styles replace the vanilla chop when enabled.
+ * Swing - dozens of hand swing animation styles.
+ * Real implementation comes with the swing mixin (next push).
  */
 public class SwingModule extends Module {
-	public enum Style {
-		CHOP("Chop"),
-		FORTNITE("Fortnite"),
-		SPIN_SLASH("Spin Slash"),
-		HELIX("Helix"),
-		WAVE("Wave"),
-		HELICOPTER("Helicopter"),
-		ONE_TWO("One-Two"),
-		PUNCH_OUT("Punch Out"),
-		HELIX_SLASH("Helix Slash"),
-		WAVE_SLASH("Wave Slash"),
-		REVERSE("Reverse"),
-		SMOOTH("Smooth");
-
-		private final String label;
-
-		Style(String label) {
-			this.label = label;
-		}
-
-		public String getLabel() {
-			return label;
-		}
-
-		public Style next() {
-			Style[] values = values();
-			return values[(this.ordinal() + 1) % values.length];
-		}
-	}
-
-	private Style style = Style.FORTNITE;
+	public final CycleSetting style;
+	public final RangeSetting speed;
+	public final ToggleSetting smooth;
 
 	public SwingModule() {
 		super("Swing", "Custom hand swing animations");
+		this.style = cycle("style", "Style", new String[] {
+				"Classic", "Chop", "Slash", "Spin", "Wave", "Flick", "Twist", "Ninja",
+				"Smooth", "Fortnite", "Cursed", "Overhead", "Underhand", "Frenzy",
+				"Slow-Mo", "Snappy", "Wobble", "Helix", "Punch", "Stab", "Swipe",
+				"Whirl", "Bounce", "Elastic", "Noodle", "Hammer", "Boxing", "Swordmaster",
+				"Flail", "Glitch", "Vortex", "Magnet"
+		}, 0);
+		this.speed = range("speed", "Speed", 0.5f, 2.0f, 0.1f, 1.0f);
+		this.smooth = toggleSetting("smooth", "Smooth", true);
 	}
 
-	public Style getStyle() {
-		return style;
-	}
-
-	public void setStyle(Style style) {
-		this.style = style;
-	}
-
-	public void cycleStyle() {
-		style = style.next();
+	@Override
+	protected void onToggle() {
+		// The swing mixin reads these settings every frame; nothing to do here.
 	}
 }
