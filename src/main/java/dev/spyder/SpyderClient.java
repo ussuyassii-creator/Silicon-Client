@@ -6,7 +6,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -16,10 +16,10 @@ import org.lwjgl.glfw.GLFW;
 public class SpyderClient implements ClientModInitializer {
 	public static final String MOD_ID = "spyderclient";
 
-	// 1.21.9+ requires a KeyMapping.Category object, not a String.
+	// Newer MC versions renamed ResourceLocation to Identifier.
 	// Translation key for this category: key.category.spyderclient.main
 	public static final KeyMapping.Category SPYDER_CATEGORY =
-			new KeyMapping.Category(ResourceLocation.fromNamespaceAndPath(MOD_ID, "main"));
+			new KeyMapping.Category(Identifier.fromNamespaceAndPath(MOD_ID, "main"));
 
 	private static KeyMapping pingKey;
 	private boolean wasPressed = false;
