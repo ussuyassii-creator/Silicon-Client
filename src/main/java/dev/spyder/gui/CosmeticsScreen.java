@@ -23,7 +23,8 @@ import org.lwjgl.glfw.GLFW;
  *
  * Uses the verified 1.21.11 path: entityRenderDispatcher.getRenderer(player)
  * -> createRenderState -> g.submitEntityRenderState(...). Same recipe as
- * working 1.21.11 cosmetics screens.
+ * working 1.21.11 cosmetics screens, adapted to Java's private-field access
+ * (Kotlin sees the field; Java must use the getter).
  */
 public class CosmeticsScreen extends Screen {
 	private static final int PREVIEW_W = 150;
@@ -114,7 +115,8 @@ public class CosmeticsScreen extends Screen {
 		float autoSpin = (time % 20000L) / 20000.0f * 360.0f;
 		float spin = manualRotY + autoSpin;
 
-		var renderer = this.mc.entityRenderDispatcher.getRenderer(this.mc.player);
+		var dispatcher = this.mc.getEntityRenderDispatcher();
+		var renderer = dispatcher.getRenderer(this.mc.player);
 		var state = renderer.createRenderState(this.mc.player, 1f);
 		if (!(state instanceof LivingEntityRenderState live)) {
 			g.drawString(this.font, "preview unavailable", x + 8, y + h / 2 - 4, 0xFF6E6E76);
@@ -151,7 +153,7 @@ public class CosmeticsScreen extends Screen {
 			g.drawString(this.font, cyc.display(), x, y + 7, 0xFFB0B0BC);
 			String chip = "< " + cyc.value() + " >";
 			int chipW = this.font.width(chip);
-			rrect(g, x + w - chipW - 16, y + 3, chipW + 12, ROW_H - 6, 0x24FFFFFF);
+			rrect(g, x + w - chipW - 16, y + 3, chipW + 12,  ROW_H - 6, 0x24FFFFFF);
 			g.drawString(this.font, chip, x + w - chipW - 10, y + 7, hue(time, y * 16));
 		} else if (s instanceof SpyderSettings.ToggleSetting tog) {
 			g.drawString(this.font, tog.display(), x, y + 7, 0xFFB0B0BC);
