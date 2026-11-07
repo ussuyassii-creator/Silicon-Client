@@ -1,9 +1,10 @@
 package dev.spyder.core;
 
 /**
- * GUI theme engine v2 - preset palettes + live theming.
+ * GUI theme engine v2 - preset palettes + live theming + glass window.
  * Seven built-in color combos; each preset sets the accent color AND a
  * matching tinted panel body so the whole GUI recolors coherently.
+ * Glass-window transparency is controlled by panelOpacity (GUI Editor slider).
  * The GUI reads these statics every frame - no allocation, no lag.
  */
 public final class GuiTheme {
@@ -36,6 +37,8 @@ public final class GuiTheme {
 	public static boolean showStars = true;
 	public static String clientName = "SPYDER";
 	public static String version = "0.2.0";
+	/** Glass-window panel transparency: 0.4 (frosted) .. 1.0 (solid). */
+	public static float panelOpacity = 0.95f;
 
 	private GuiTheme() {
 	}
@@ -71,6 +74,13 @@ public final class GuiTheme {
 
 	public static int onOffColor(boolean on) {
 		return on ? accent() : 0xFF555555;
+	}
+
+	/** Scale an ARGB color's alpha by the glass opacity. */
+	public static int glass(int argb) {
+		int a = (argb >>> 24) & 0xFF;
+		int ga = (int) (a * panelOpacity);
+		return (ga << 24) | (argb & 0x00FFFFFF);
 	}
 
 	public static void cycleBackground() {
