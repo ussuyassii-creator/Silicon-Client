@@ -24,6 +24,16 @@ public final class ModuleManager {
 		MODULES.add(module);
 	}
 
+	/** Lookup a registered module by class. Returns null if not registered. */
+	public static <T extends Module> T get(Class<T> type) {
+		for (Module module : MODULES) {
+			if (type.isInstance(module)) {
+				return type.cast(module);
+			}
+		}
+		return null;
+	}
+
 	public static List<Module> modules() {
 		return Collections.unmodifiableList(MODULES);
 	}
