@@ -6,17 +6,22 @@ import dev.spyder.core.SpyderSettings.RangeSetting;
 import dev.spyder.core.SpyderSettings.ToggleSetting;
 
 /**
- * GUI Editor - customize the look of the SpyderClient GUI itself:
- * accent color, background style (incl. cosmic), and animations.
+ * GUI Editor - customize the look of the client GUI itself:
+ * client name, accent color, background style (incl. cosmic), and animations.
+ * Changing "Client name" rebrands the GUI header AND the HUD watermark live.
  */
 public class GuiModule extends Module {
+	public final CycleSetting clientName;
 	public final CycleSetting accentColor;
 	public final CycleSetting background;
 	public final RangeSetting cosmicIntensity;
 	public final ToggleSetting showStars;
 
 	public GuiModule() {
-		super("GUI Editor", "Customize the SpyderClient GUI look");
+		super("GUI Editor", "Customize the client GUI look");
+		this.clientName = cycle("name", "Client name", new String[] {
+				"SPYDER", "SILICON"
+		}, 0);
 		this.accentColor = cycle("accent", "Accent color", new String[] {
 				"Green", "Red", "Blue", "Purple", "Gold", "Cyan", "Orange", "White"
 		}, 0);
@@ -34,9 +39,11 @@ public class GuiModule extends Module {
 
 	/**
 	 * Push the module settings into the static theme engine so the ClickGUI
-	 * picks them up instantly, with zero per-frame lookups.
+	 * and HUD pick them up instantly, with zero per-frame lookups.
 	 */
 	public void syncToTheme() {
+		String name = clientName.value();
+		GuiTheme.clientName = name.equals("SILICON") ? "SILICON" : "SPYDER";
 		switch (accentColor.value()) {
 			case "Red" -> { GuiTheme.accentR = 0xFF; GuiTheme.accentG = 0x4C; GuiTheme.accentB = 0x4C; }
 			case "Blue" -> { GuiTheme.accentR = 0x4C; GuiTheme.accentG = 0x9A; GuiTheme.accentB = 0xFF; }
